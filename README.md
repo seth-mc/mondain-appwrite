@@ -1,2 +1,2 @@
 # mondain-appwrite
-Appwrite implementation of Mondain WEbsite
+Appwrite implementation of Mondain Website
