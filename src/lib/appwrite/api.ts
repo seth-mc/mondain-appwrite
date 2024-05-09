@@ -63,7 +63,7 @@ export async function saveUserToDB(user: {
 // ============================== SIGN IN
 export async function signInAccount(user: { email: string; password: string }) {
   try {
-    const session = await account.createEmailSession(user.email, user.password);
+    const session = await account.createEmailPasswordSession(user.email, user.password);
 
     return session;
   } catch (error) {
@@ -125,15 +125,23 @@ export async function createPost(post: INewPost) {
     // Upload files to Appwrite storage
     const uploadedFiles = await uploadFiles(post.file);
 
-    if (uploadedFiles.length === 0) throw Error;
+    let thumbnailUrl = null;
+    if (post.thumbnail) {
+      const uploadedThumbnail = await uploadFiles([post.thumbnail]);
+      if (uploadedThumbnail.length > 0) {
+        thumbnailUrl = getFilePreview(uploadedThumbnail[0].$id);
+      }
+    }
+
+    if (uploadedFiles.length === 0) throw new Error("No files uploaded");
 
     // Get file URLs
     const fileUrls = uploadedFiles.map(file => getFilePreview(file.$id)).filter(url => url);
-
     if (fileUrls.length === 0) {
       uploadedFiles.forEach(file => deleteFile(file.$id));
-      throw Error;
+      throw new Error("Failed to get file URLs");
     }
+
 
     // Convert tags into array
     const tags = post.tags?.replace(/ /g, "").split(",") || [];
@@ -146,23 +154,24 @@ export async function createPost(post: INewPost) {
       {
         creator: post.userId,
         caption: post.caption,
-        imageUrls: fileUrls, // Storing multiple image URLs
-        imageIds: uploadedFiles.map(file => file.$id), // Storing IDs of all uploaded files
+        imageUrls: fileUrls,
+        thumbnailUrl, // Save thumbnail URL
+        imageIds: uploadedFiles.map(file => file.$id),
         location: post.location,
-        tags: tags,
-        category: post.category,
-        scheduledDate: post.scheduledDate,
+        tags,
+        category: post.category
       }
     );
 
     if (!newPost) {
       uploadedFiles.forEach(file => deleteFile(file.$id));
-      throw Error;
+      throw new Error("Failed to create new post");
     }
 
     return newPost;
   } catch (error) {
-    console.log(error);
+    console.error("Failed to create post:", error);
+    throw error;
   }
 }
 
@@ -219,7 +228,7 @@ export async function deleteFile(fileId: string) {
 
     return { status: "ok" };
   } catch (error) {
-    console.log(error);
+    (error);
   }
 }
 
@@ -237,10 +246,18 @@ export async function searchPosts(searchTerm: string, activeCategory?: string) {
       }
     }
 
+    const searchTermArray = [searchTerm.toLowerCase(), searchTerm.toUpperCase(), searchTerm.charAt(0).toUpperCase() + searchTerm.slice(1)];
     const posts = await databases.listDocuments(
       appwriteConfig.databaseId,
       appwriteConfig.postCollectionId,
-      [Query.search("caption", searchTerm)]
+      [
+        Query.or([
+          Query.contains("caption", searchTermArray),
+          Query.contains("tags", searchTermArray),
+          Query.contains("location", searchTermArray),
+          Query.contains("category", searchTermArray),
+        ])
+      ]
     );
 
     if (!posts) throw Error;
@@ -500,8 +517,7 @@ export async function createQueuedPost(post: INewPost) {
         imageIds: uploadedFiles.map(file => file.$id), // Storing IDs of all uploaded files
         location: post.location,
         tags: tags,
-        category: post.category,
-        scheduledDate: post.scheduledDate,
+        category: post.category
       }
     );
 
@@ -692,8 +708,7 @@ export async function createSpark(post: INewPost) {
         imageIds: uploadedFiles.map(file => file.$id), // Storing IDs of all uploaded files
         location: post.location,
         tags: tags,
-        category: post.category,
-        scheduledDate: post.scheduledDate,
+        category: post.category
       }
     );
 

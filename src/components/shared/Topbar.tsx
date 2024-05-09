@@ -15,10 +15,10 @@ const itemVariants: Variants = {
     closed: { opacity: 0, y: 20, transition: { duration: 0.2 } }
   };
 
-const Topbar = ({ darkMode, toggleDarkMode }: DarkModeProps) => {
+const Topbar = ({ isAdmin, darkMode, toggleDarkMode }: DarkModeProps) => {
   const [isOpen, setIsOpen] = useState(false);
   return (
-    <div className="flex justify-between w-full mt-5 pb-7 px-5">
+    <div className="!z-10 flex justify-between w-full mt-5 pb-7 px-5">
     <div className="flex items-center">
       {/* Hamburger Menu for small screens */}
       <div className="md:hidden">
@@ -83,7 +83,7 @@ const Topbar = ({ darkMode, toggleDarkMode }: DarkModeProps) => {
 
         {/* Profile Dropdown always on the right */}
       <div className="max-w-[40px] flex gap-3">
-        <ProfileDropdown darkMode={darkMode} toggleDarkMode={toggleDarkMode}/>
+        <ProfileDropdown isAdmin={isAdmin} darkMode={darkMode} toggleDarkMode={toggleDarkMode}/>
       </div>
     </div>
   );

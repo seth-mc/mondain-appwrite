@@ -22,15 +22,14 @@ import {
   getUserById,
   updateUser,
   getRecentPosts,
-  getInfinitePosts,
-  getInfiniteSparks,
+  getInfinitePosts,  
   searchPosts,
   savePost,
   deleteSavedPost,
   searchPostsGraphql,
   createQueuedPost,
 } from "@/lib/appwrite/api";
-import { INewPost, INewUser, IUpdatePost, IUpdateUser } from "@/types";
+import { INewPost, INewUser, IUpdatePost, IUpdateUser, Page } from "@/types";
 
 // ============================================================
 // AUTH QUERIES
@@ -66,10 +65,10 @@ export const useGetAccount = () => {
 // ============================================================
 
 export const useGetPosts = () => {
-  return useInfiniteQuery({
+  return useInfiniteQuery<Page, Error>({
     queryKey: [QUERY_KEYS.GET_INFINITE_POSTS],
-    queryFn: getInfinitePosts as any,
-    getNextPageParam: (lastPage: any) => {
+    queryFn: getInfinitePosts,
+    getNextPageParam: (lastPage: Page | undefined) => {
       // If there's no data, there are no more pages.
       if (lastPage && lastPage.documents.length === 0) {
         return null;
@@ -79,6 +78,7 @@ export const useGetPosts = () => {
       const lastId = lastPage.documents[lastPage.documents.length - 1].$id;
       return lastId;
     },
+    initialPageParam: undefined,
   });
 };
 
@@ -282,27 +282,6 @@ export const useSearchPostsGraphql = (searchTerm: string) => {
 
 
 
-
-// ============================================================
-// SPARK QUERIES
-// ============================================================
-
-export const useGetSparks = () => {
-  return useInfiniteQuery({
-    queryKey: [QUERY_KEYS.GET_INFINITE_SPARKS],
-    queryFn: getInfiniteSparks as any,
-    getNextPageParam: (lastPage: any) => {
-      // If there's no data, there are no more pages.
-      if (lastPage && lastPage.documents.length === 0) {
-        return null;
-      }
-
-      // Use the $id of the last document as the cursor.
-      const lastId = lastPage.documents[lastPage.documents.length - 1].$id;
-      return lastId;
-    },
-  });
-};
 
 // Search sparks in the search field
 export const useSearchSparks = (searchValue: string, activeCategory?: string) => {

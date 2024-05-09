@@ -4,22 +4,23 @@ import { Models } from 'appwrite';
 
 type PostsProps = {
   posts: Models.Document[];
+  newToSite: boolean;
 };
 
 const breakpointColumnsObj = {
   default: 4,
-  3000: 6,
-  2000: 5,
+  3000: 5,
+  2000: 4,
   1200: 3,
   1000: 2,
   500: 1,
 };
 
-const MasonryLayout = ({ posts }: PostsProps) => {
+const MasonryLayout = ({ newToSite, posts }: PostsProps) => {
   return (
-    <Masonry className="flex animate-slide-fwd" breakpointCols={breakpointColumnsObj}>
+    <Masonry className="d flex animate-slide-fwd" breakpointCols={breakpointColumnsObj}>
       {posts?.map((post: Models.Document) => (
-        <Post key={post.$id} post={post} />
+        <Post newToSite={newToSite} key={post.$id} post={post} />
       ))}
     </Masonry>
   );

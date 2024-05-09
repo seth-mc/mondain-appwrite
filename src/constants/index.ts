@@ -4,8 +4,8 @@ export const sections = [
       route: '/',
     },
     {
-      label: 'shoppe',
-      route: '/shop',
+      label: 'dj',
+      route: '/dj',
     },
     {
       label: 'the rack',

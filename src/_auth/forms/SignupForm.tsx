@@ -57,6 +57,7 @@ const SignupForm = () => {
 
       if (isLoggedIn) {
         form.reset();
+        console.log("User created successfully. Sending to Home.")
 
         navigate("/");
       } else {

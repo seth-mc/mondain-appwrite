@@ -50,7 +50,7 @@ const SigninForm = () => {
       const isAdmin = userDetails?.labels?.includes('admin');
   
       // Navigate to the appropriate page
-      navigate(isAdmin ? "/admin" : "/");
+      navigate("/");
     } else {
       toast({ title: "Login failed. Please try again.", });
       return;

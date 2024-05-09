@@ -6,7 +6,7 @@ const Admin = ({ darkMode }: DarkModeProps) => {
     <div>
     <div className="flex justify-center">
         <img
-          className={`cursor-pointer w-80 ${darkMode ? 'invert' : ''}`}
+          className={`d cursor-pointer w-80 ${darkMode ? 'invert' : ''}`}
           src="/assets/icons/mondain-admin.svg"
           alt="logo"
         />

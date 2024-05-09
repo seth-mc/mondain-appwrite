@@ -8,6 +8,7 @@ import { categories } from "@/constants";
 import { SearchResultProps } from "@/types";
 import { DarkModeProps } from "@/types";
 
+
 const SearchResults = ({ isSearchFetching, searchedPosts }: SearchResultProps) => {
   if (isSearchFetching) {
     return <Loader />;
@@ -19,6 +20,7 @@ const SearchResults = ({ isSearchFetching, searchedPosts }: SearchResultProps) =
   }
 };
 
+
 const Home = ({ darkMode }: DarkModeProps) => {
   const { ref, inView } = useInView();
   const { data: posts, fetchNextPage, hasNextPage } = useGetPosts();
@@ -28,11 +30,18 @@ const Home = ({ darkMode }: DarkModeProps) => {
   const debouncedSearch = useDebounce(searchValue, 500);
   const { data: searchedPosts, isFetching: isSearchFetching } = useSearchPosts(debouncedSearch, activeCategory);
 
+  const cookieFallback = localStorage.getItem("cookieFallback");
+  const newToSite = cookieFallback === "[]" || cookieFallback === null || cookieFallback === undefined;
+
 
 
   const resetSearch = () => {
     setSearchValue("");
     setActiveCategory("");
+  }
+
+  function modifyImageUrl(url, width = 600, height = 600) {
+    return url.replace(/width=\d+/, `width=${width}`).replace(/height=\d+/, `height=${height}`);
   }
 
   useEffect(() => {
@@ -44,6 +53,18 @@ const Home = ({ darkMode }: DarkModeProps) => {
   useEffect(() => {
     if (posts?.pages) {
       const newPosts = posts.pages.flatMap(page => page.documents);
+      setAllPosts(newPosts);
+    }
+  }, [posts]);
+
+  useEffect(() => {
+    if (posts?.pages) {
+      const newPosts = posts.pages.flatMap(page => page.documents.map(doc => {
+        return {
+          ...doc,
+          imageUrls: doc.imageUrls.map(url => modifyImageUrl(url)) // Modify each URL
+        };
+      }));
       setAllPosts(newPosts);
     }
   }, [posts]);
@@ -63,11 +84,13 @@ const Home = ({ darkMode }: DarkModeProps) => {
     <div>
       <div onClick={resetSearch} className="flex justify-center">
         <img
-          className={`cursor-pointer w-80 ${darkMode ? 'invert' : ''}`}
+          className={`d cursor-pointer w-80 ${darkMode ? 'invert' : ''}`}
           src="/assets/icons/mondain-svg.svg"
           alt="logo"
         />
       </div>
+      { newToSite ? (
+         <div></div> ) : (
       <div className="px-8 sm:px-10 md:px-20 lg:px-80 flex gap-2 w-full mt-5 pb-7 scroll-transition-fade">
         <div className="flex justify-start items-center w-full px-2 rounded-xl bg-light-1 border border-2 border-dark-1 focus-within:shadow-sm">
           <img src="/assets/icons/search.svg"
@@ -87,6 +110,7 @@ const Home = ({ darkMode }: DarkModeProps) => {
           />
         </div>
       </div>
+      )}
       <div className="lg:px-20 md:px-20 sm:px-0 px-5 flex flex-wrap justify-center gap-2">
         {categories.map(category => (
           <div key={category.name} className="flex items-center px-2 mb-2" onClick={() => {
@@ -117,16 +141,23 @@ const Home = ({ darkMode }: DarkModeProps) => {
         ) : shouldShowPosts ? (
           <p className="text-light-4 mt-10 text-center w-full">End of posts</p>
         ) : (
-          <MasonryLayout posts={allPosts} />
+          <MasonryLayout newToSite={newToSite} posts={allPosts} />
         )}
       </div>
-      {hasNextPage && !searchValue && (
+      {newToSite ? (
+        <div>
+        <a href="/sign-in">
+          <div className="text-light-4 pb-20 mt-10 text-center w-full font-spacemono">Sign in to view more
+        </div>
+        </a>
+        </div>
+        ) : 
+        hasNextPage && !searchValue && (
         <div ref={ref} className="mt-10">
           <Loader />
         </div>
       )}
-    </div>
-
+  </div>
   )
 }
 

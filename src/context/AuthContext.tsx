@@ -43,6 +43,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     setIsLoading(true);
     try {
       const currentAccount = await getCurrentUser();
+      console.log("Current Account", currentAccount);
       if (currentAccount) {
         setUser({
           id: currentAccount.$id,
@@ -51,32 +52,39 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           email: currentAccount.email,
           imageUrl: currentAccount.imageUrl,
           bio: currentAccount.bio,
-          labels: currentAccount.labels,
+          admin: currentAccount.admin,
         });
+
+        console.log("User is authenticated", currentAccount);
         setIsAuthenticated(true);
 
         return true;
-      }
+      } 
 
+      console.log("No current account found");
       return false;
     } catch (error) {
-      console.error(error);
+      console.error("Error fetching current user", error);
       return false;
     } finally {
       setIsLoading(false);
     }
   };
 
+
   useEffect(() => {
     const cookieFallback = localStorage.getItem("cookieFallback");
     if (
-      cookieFallback === "[]" ||
-      cookieFallback === null ||
-      cookieFallback === undefined
+      cookieFallback !== "[]" &&
+      cookieFallback !== null &&
+      cookieFallback !== undefined
     ) {
-      navigate("/sign-in");
+      // Parse the cookieFallback string into an object
+      const cookieFallbackData = JSON.parse(cookieFallback);
+      // Update the user state with the data from cookieFallback
+      setUser(cookieFallbackData);
     }
-
+  
     checkAuthUser();
   }, []);
 
@@ -89,9 +97,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     checkAuthUser,
   };
 
+  console.log("AuthContext value", value);
+
+
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }
 
 export default AuthProvider;
 
-export const useUserContext = () => useContext(AuthContext);
+export const useUserContext = () => {
+  const context = useContext(AuthContext);
+  console.log("useUserContext", context);
+  return context;
+};

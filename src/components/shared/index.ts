@@ -5,4 +5,7 @@ export { default as FileUploader } from "./FileUploader";
 export { default as Post } from "./Post";
 export { default as Searchbox } from "./Searchbox";
 export { default as MasonryLayout } from "./MasonryLayout";
-
+export { asciiFrame as CubeLoader } from './CubeLoader';
+export { default as PlayerComponent } from './Player';
+export { MainLogo } from './AniLogo-Main';
+export { RunningLogo } from './AniLogo-Run';

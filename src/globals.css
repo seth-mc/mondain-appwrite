@@ -5,6 +5,11 @@
 @tailwind components;
 @tailwind utilities;
 
+html {
+  scroll-behavior: smooth;
+
+}
+
 @layer base {
   * {
     @apply box-border list-none p-0 m-0 scroll-smooth;
@@ -335,3 +340,329 @@
   }
 }
 
+
+
+.hide-scrollbar::-webkit-scrollber {
+  display: none;
+}
+
+.d {
+user-drag: none;
+-webkit-user-drag: none;
+user-select: none;
+-moz-user-select: none;
+-webkit-user-select: none;
+-ms-user-select: none;
+}
+.player-controls {
+display: flex;
+align-items: center;
+}
+
+.player-button {
+height: 1rem;
+width: 1rem;
+position: relative;
+background-size: contain;
+background-repeat: no-repeat;
+background-position: 50%;
+transition: opacity .4s ease,transform .4s ease;
+}
+
+.player-button .player__button__play {
+background-image: url('data:image/svg+xml;charset=utf-8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 22 28"><path fill="%23000" d="M0 0v28l22-14L0 0z"/></svg>');
+}
+
+.player-button .player__button__pause {
+background-image: url('data:image/svg+xml;charset=utf-8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 22 28"><path fill="%23000" d="M.5 0h7v28h-7zM14.5 0h7v28h-7z"/></svg>');
+}
+
+.ff {
+width: 1.5rem;
+height: 1.5rem;
+max-width: fit-content;
+}
+
+.ff-button {
+margin-left: 1rem;
+margin-top: 0.4rem;
+}
+
+.player-button:active {
+opacity: 50%;
+transform: scale(0.25);
+}
+
+.musical-note {
+  margin-block-start: 4.3em;
+}
+
+.player__button__play {
+  background: url('data:image/svg+xml;charset=utf-8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 22 28"><path fill="%23000" d="M0 0v28l22-14L0 0z"/></svg>') no-repeat 50%/contain;
+  transition: opacity .4s ease,transform .4s ease;
+  width: 1rem;
+  position: absolute;
+  height: 1rem;
+}
+
+.player__button__pause {
+  background: url('data:image/svg+xml;charset=utf-8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 22 28"><path fill="%23000" d="M.5 0h7v28h-7zM14.5 0h7v28h-7z"/></svg>') no-repeat 50%/contain;
+  transition: opacity .4s ease,transform .4s ease;
+  width: 1rem;
+  position: absolute;
+  height: 1rem;
+}
+
+.player__button__play:active {
+  opacity: 50%;
+  transform: scale(0.25);
+}
+
+.player__button__pause:active {
+  opacity: 50%;
+  transform: scale(0.25);
+}
+
+/* SoundCloud Widget Music */
+/* SC Widget */
+
+iframe.sc-widget {
+  visibility: hidden;
+  height: 0px;
+  width: 0px;
+}
+
+.player-container {
+  border: 2px solid var(--dark-1);
+}
+
+.player {
+  display: flex;
+  flex-wrap: wrap;
+
+}
+
+.player-info {
+  padding: 20px;
+  width: 50%;
+  background: var(--light-1);
+  text-wrap: none;
+  white-space: nowrap;
+  height: 150px;
+}
+
+.player-time {
+  display: flex;
+  font-size: 13px;
+  flex-direction: row;
+  justify-content: left;
+  align-items: center;
+}
+
+.current,
+.duration {
+  margin: 0px 30px 0px 0px;
+  color: var(--dark-1);
+}
+
+
+.sidenav {
+  font-family: 'Space Mono';
+  box-sizing: border-box;
+  position: relative;
+  display: inline-block;
+  height: 190px;
+  width: 300px;
+  position: fixed;
+  z-index: 1;
+  bottom: var(--musictab, 50px);
+  right: 0;
+  overflow-x: hidden;
+  transition: 0.5s;
+  z-index: 20;
+}
+
+.sidenav a {
+  width: inherit;
+  text-decoration: none;
+  color: var(--dark-1);
+  display: block;
+  transition: 0.3s;
+}
+
+.sidenav a:hover {
+  color: var(--dark-1);
+}
+
+.sidenav .closebtn {
+  position: absolute;
+  top: 0;
+  right: 25px;
+  font-size: 36px;
+  margin-left: 50px;
+}
+
+@media screen and (max-height: 450px) {
+  .sidenav a {
+    font-size: 18px;
+  }
+}
+
+#playermenu {
+  cursor: grab;
+  position: fixed;
+  width: 30px;
+  height: 154px;
+  right: 300px;
+  float: right;
+  transition: 0.5s;
+  background: var(--light-1);
+  border-radius: 25px 0 0 25px;
+
+  border: 2px solid var(--dark-1);
+  
+  border-right: none;
+  
+  display: -webkit-box;
+  display: -ms-flexbox;
+  display: flex;
+  justify-content: center;
+  -webkit-box-orient: vertical;
+  -webkit-box-direction: normal;
+  -ms-flex-direction: column;
+  flex-direction: column;
+  z-index: 1 !important;
+}
+
+.drag-header {
+  position: absolute;
+  left: 4.5px;
+  top: 0px;
+  bottom: 0;
+  z-index: 20;
+  width: inherit;
+  height: inherit;
+  color: var(--dark-1);
+}
+
+.play {
+  height: 0;
+  border-top: 2px solid transparent;
+  border-bottom: 2px solid transparent;
+  border-left: 2px solid green;
+}
+
+#playermenu svg {
+  display: block;
+  margin-block-start: 4.3em;
+  width: 18px;
+  height: 18px;
+}
+
+  
+.player-title-outer {
+  width: 200px; /* set the width of the viewport */
+  overflow: hidden; /* hide the overflowing content */
+  padding-bottom: 5px;
+}
+
+.player-title {
+  color: var(--dark-1);
+  font-size: 13px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  padding-top: 12px;
+}
+
+.player-title-marquee {
+  animation: marquee 20s linear infinite;
+}
+
+
+
+.player-visual {
+  display: flex;
+}
+
+.record-box {
+  display: flex;
+  right: 0;
+  position: absolute;
+  top: 0;
+  padding: 35px;
+  background: var(--light-1);
+  border: 2px solid var(--dark-1);
+  border-left: 2px solid var(--light-1);
+
+}
+
+.record {
+  object-fit: fill;
+  border-radius: 50%;
+  height: 80px;
+  width: 80px;
+}
+
+.rotate {
+  animation: rotation 8s infinite linear;
+}
+
+.paused {
+  animation-play-state: paused;
+  -webkit-animation-play-state: paused;
+}
+
+
+@keyframes rotation {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(359deg);
+  }
+}
+
+@keyframes marquee {
+  0% {
+    transform: translateX(0); /* start from the original position */
+  }
+  75% {
+    transform: translateX(-100%); /* move to the left by the width of the text */
+  }
+  100% {
+    transform: translateX(0%); /* move to the left by the width of the text */
+  }
+}
+
+
+::-webkit-scrollbar {
+  width: 0;  /* Remove scrollbar space */
+  background: transparent;  /* Optional: just make scrollbar invisible */
+}
+
+code {
+  font-family: 'Space Mono';
+}
+
+.loading {
+  font-family: 'Space Mono';
+}
+
+.container {
+height: 10em;
+position: relative
+}
+
+.cube {
+text-align: center;
+padding: 20px;
+margin: 50px;
+position: center;
+font-family: 'Space Mono';
+/*word-wrap: break-word;
+white-space: pre-wrap;
+word-break: break-word; */
+color: var(--dark-4); 
+font-size: 10pt;
+}

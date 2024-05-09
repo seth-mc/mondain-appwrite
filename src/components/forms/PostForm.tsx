@@ -18,14 +18,13 @@ import {
   SelectContent,
   SelectItem,
   SelectTrigger,
-  SelectValue,
-  DateTimePicker,
+  SelectValue
 } from "@/components/ui";
 import { PostValidation } from "@/lib/validation";
 import { useToast } from "@/components/ui/use-toast";
 import { useUserContext } from "@/context/AuthContext";
 import { FileUploader, Loader } from "@/components/shared";
-import { useCreateQueuedPost, useUpdatePost } from "@/lib/react-query/queries";
+import { useCreatePost, useUpdatePost } from "@/lib/react-query/queries";
 import { categories } from "@/constants";
 
 type PostFormProps = {
@@ -42,16 +41,16 @@ const PostForm = ({ post, action }: PostFormProps) => {
     defaultValues: {
       caption: post ? post?.caption : "",
       file: [],
+      thumbnail: post ? post?.thumbnail : "",
       location: post ? post.location : "",
       tags: post ? post.tags.join(",") : "",
       category: post ? post.category : "",
-      scheduledDate: post ? post?.scheduledDate.toISOString() : "",
     },
   });
 
   // Query
-  const { mutateAsync: QueuedPost, isLoading: isLoadingCreate } =
-  useCreateQueuedPost();
+  const { mutateAsync: createPost, isLoading: isLoadingCreate } =
+    useCreatePost();
   const { mutateAsync: updatePost, isLoading: isLoadingUpdate } =
     useUpdatePost();
 
@@ -63,8 +62,9 @@ const PostForm = ({ post, action }: PostFormProps) => {
       const updatedPost = await updatePost({
         ...value,
         postId: post.$id,
-        imageId: post.imageId,
-        imageUrl: post.imageUrl,
+        imageIds: post.imageId,
+        imageUrls: post.imageUrl,
+        thumbnail: post.$thumbnail,
       });
 
       if (!updatedPost) {
@@ -76,8 +76,9 @@ const PostForm = ({ post, action }: PostFormProps) => {
     }
 
     // ACTION = CREATE
-    const newPost = await QueuedPost({
+    const newPost = await createPost({
       ...value,
+      thumbnail: post?.$thumbnail,
       userId: user.id,
     });
 
@@ -120,7 +121,7 @@ const PostForm = ({ post, action }: PostFormProps) => {
               <FormControl>
                 <FileUploader
                   fieldChange={field.onChange}
-                  mediaUrl={post?.imageUrl}
+                  mediaUrls={post?.imageUrl}
                 />
               </FormControl>
               <FormMessage className="shad-form_message" />
@@ -163,17 +164,6 @@ const PostForm = ({ post, action }: PostFormProps) => {
           )}
         />
 
-        <FormField
-          control={form.control}
-          name="scheduledDate"
-          render={({ field }) => (
-            <FormItem className="flex flex-col">
-              <FormLabel>Scheduled Date:</FormLabel>
-              <DateTimePicker field={field} />
-              <FormMessage />
-            </FormItem>
-          )}
-        />
 
         <FormField
           control={form.control}

@@ -2,57 +2,39 @@ import { useCallback, useEffect, useState } from "react";
 import { FileWithPath, useDropzone } from "react-dropzone";
 import { Button } from "@/components/ui";
 import { convertFileToUrl } from "@/lib/utils";
-import smartcrop from "smartcrop";
 import Upscaler from "upscaler";
 
 
 type FileUploaderProps = {
-    fieldChange: (files: File[]) => void;
+    fieldChange: (assets: uploadAsset[]) => void;
     mediaUrls: string[];
 };
 
-type ImageAsset = {
+type uploadAsset = {
     url: string;
     file: File;
+    type: string;
+    thumbnail?: File;
 }
 
-const FileUploader = ({ fieldChange, mediaUrls }: FileUploaderProps) => {
+const dataURLtoBlob = (dataurl: string) => {
+    let arr = dataurl.split(','), mime = arr[0].match(/:(.*?);/)[1],
+        bstr = atob(arr[1]), n = bstr.length, u8arr = new Uint8Array(n);
+    while (n--) {
+        u8arr[n] = bstr.charCodeAt(n);
+    }
+    return new Blob([u8arr], { type: mime });
+};
+
+const blobToFile = (blob: Blob, filename: string): File => {
+    return new File([blob], filename, { type: blob.type, lastModified: Date.now() });
+  }
+
+const FileUploader = ({ fieldChange, mediaUrls, }: FileUploaderProps) => {
     const [file, setFile] = useState<File[]>([]);
     const [fileUrls, setFileUrls] = useState<string[]>(mediaUrls);
-    const [imageAssets, setImageAssets] = useState<ImageAsset[]>([]);
+    const [uploadAssets, setuploadAssets] = useState<uploadAsset[]>([]);
 
-
-    const cropImage = async (file: File, targetWidth: number, targetHeight: number): Promise<File> => {
-        return new Promise((resolve, reject) => {
-            const image = new Image();
-            image.src = URL.createObjectURL(file);
-            image.onload = () => {
-                const canvas = document.createElement('canvas');
-                const ctx = canvas.getContext('2d');
-                if (!ctx) {
-                    reject(new Error('Failed to get canvas context'));
-                    return;
-                }
-
-                ctx.drawImage(image, 0, 0);
-
-                smartcrop.crop(image, { width: targetWidth, height: targetHeight }).then(result => {
-                    const crop = result.topCrop;
-                    canvas.width = crop.width;
-                    canvas.height = crop.height;
-                    ctx.drawImage(image, crop.x, crop.y, crop.width, crop.height, 0, 0, crop.width, crop.height);
-                    canvas.toBlob(blob => {
-                        if (blob) {
-                            resolve(new File([blob], file.name, { type: file.type }));
-                        } else {
-                            reject(new Error('Failed to create Blob from canvas'));
-                        }
-                    }, file.type);
-                });
-            };
-            image.onerror = reject;
-        });
-    };
 
     const processImage = useCallback(async (file: File): Promise<File> => {
         let processedFile: File = file;
@@ -81,44 +63,93 @@ const FileUploader = ({ fieldChange, mediaUrls }: FileUploaderProps) => {
             };
         });
 
-        return await cropImage(processedFile, targetWidth, targetHeight);
+        return processedFile;
     }, []);
 
 
 
-    const processVideo = async (file: File) => {
-        // Implement video processing logic here
-        // Extract thumbnail, etc.
-    };
+    const processVideo = useCallback(async (file: File) => {
+        return new Promise<{ video: File, thumbnail: File }>((resolve, reject) => {
+            
+            const reader = new FileReader();
+            reader.onabort = () => reject(new Error('file reading was aborted'));
+            reader.onerror = () => reject(new Error('file reading has failed'));
+            reader.onload = () => {
+                const binaryStr = reader.result;
+                const blob = new Blob([new Uint8Array(binaryStr as ArrayBuffer)], { type: file.type });
+                const videoFile = new File([blob], file.name, { type: file.type });
+
+                const video = document.createElement('video');
+                video.src = URL.createObjectURL(videoFile);
+                video.preload = 'metadata';
+
+                video.addEventListener('loadedmetadata', () => {
+                    const middleTime = video.duration / 2;
+                    video.currentTime = middleTime;
+
+                    video.addEventListener('seeked', () => {
+                        const canvas = document.createElement('canvas');
+                        canvas.width = video.videoWidth;
+                        canvas.height = video.videoHeight;
+                        canvas.getContext('2d')?.drawImage(video, 0, 0);
+
+                        const thumbnailDataUrl = canvas.toDataURL('image/jpeg');
+                        const thumbnailFile = blobToFile(dataURLtoBlob(thumbnailDataUrl), 'thumbnail.jpg');
+
+                        resolve({ video: videoFile, thumbnail: thumbnailFile });
+                    });
+
+                    setTimeout(() => {
+                        reject(new Error('Failed to seek to the middle of the video'));
+                    }, 5000);
+                });
+
+                setTimeout(() => {
+                    reject(new Error('Failed to load video metadata'));
+                }, 5000);
+            }
+            reader.readAsArrayBuffer(file);
+        });
+    }, []);
 
     const onDrop = useCallback(
         (acceptedFiles: FileWithPath[]) => {
-          acceptedFiles.forEach(async (file) => {
-            if (file.type.startsWith('image/')) {
-              try {
-                const processedFile = await processImage(file);
-                const url = URL.createObjectURL(processedFile);
-                setImageAssets(prev => [...prev, { url, file: processedFile }]);
-              } catch (error) {
-                console.error("Error processing file:", error);
-              }
-            }
-          });
+            acceptedFiles.forEach(async (file) => {
+                if (file.type.startsWith('image/')) {
+                    try {
+                        const processedFile = await processImage(file);
+                        const url = URL.createObjectURL(processedFile);
+                        setuploadAssets(prev => [...prev, { url, file: processedFile, type: file.type }]);
+                    } catch (error) {
+                        console.error("Error processing file:", error);
+                    }
+                } else if (file.type.startsWith('video/')) {
+                    try {
+                        const { video, thumbnail } = await processVideo(file);
+                        const url = URL.createObjectURL(video);
+                        console.log('thumbnail', thumbnail)
+                        setuploadAssets(prev => [...prev, { url, thumbnail, file: video, type: file.type }]);
+                    } catch (error) {
+                        console.error("Error processing video file:", error);
+                    }
+                }
+            });
         },
-        [processImage]
-      );
-      
-      // Use useEffect to update the parent state when imageAssets changes
-      useEffect(() => {
-        const files = imageAssets.map(asset => asset.file);
+        [] // Add an empty array as the second argument
+    );
+
+    // Use useEffect to update the parent state when imageAssets changes
+    useEffect(() => {
+        const files = uploadAssets.map(asset => asset.file);
         fieldChange(files);
-      }, [imageAssets, fieldChange]);
-      
+    }, [uploadAssets, fieldChange]);
+
 
     const { getRootProps, getInputProps } = useDropzone({
         onDrop,
         accept: {
             "image/*": [".png", ".jpeg", ".jpg", ".svg", ".gif", ".tiff"],
+            "video/*": [".mp4", ".mov", ".avi", ".flv", ".mkv"],
         },
     });
 
@@ -131,21 +162,30 @@ const FileUploader = ({ fieldChange, mediaUrls }: FileUploaderProps) => {
                 >
                     <input {...getInputProps()} className="hidden" />
 
-                    {imageAssets.length ? (
-                        imageAssets.map((image, index) => (
+                    {uploadAssets.length ? (
+                        uploadAssets.map((asset, index) => (
                             <div key={index} className="relative">
-                                <img
-                                    src={image.url}
-                                    alt={`uploaded-pic-${index}`}
-                                    className="h-full w-full object-cover"
-                                />
+                                {asset.type.startsWith('image/') ? (
+                                    <img
+                                        src={asset.url}
+                                        alt={`uploaded-pic-${index}`}
+                                        className="h-full w-full object-cover"
+                                    />
+                                ) : (
+                                    <video
+                                        src={asset.url}
+                                        title={`uploaded-video-${index}`}
+                                        className="h-full w-full object-cover"
+                                        controls
+                                    />
+                                )}
                                 <button
                                     type="button"
                                     className="absolute top-0 right-0 p-1 rounded-full bg-light-1 text-xl cursor-pointer outline-none hover:shadow-md transition-all duration-500 ease-in-out"
                                     onClick={(e) => {
                                         e.stopPropagation(); // Prevent triggering the file input
-                                        setImageAssets(prevImages => prevImages.filter((_, i) => i !== index));
-                                        URL.revokeObjectURL(image.url); // Revoke the object URL to free memory
+                                        setuploadAssets(prevAssets => prevAssets.filter((_, i) => i !== index));
+                                        URL.revokeObjectURL(asset.url); // Revoke the object URL to free memory
                                     }}
                                 >
                                     <img src="/assets/icons/delete.svg" alt="delete" />
@@ -162,9 +202,9 @@ const FileUploader = ({ fieldChange, mediaUrls }: FileUploaderProps) => {
                             />
 
                             <h3 className="base-medium text-light-2 mb-2 mt-6">
-                                Drag photo here
+                                Drag photo or video here
                             </h3>
-                            <p className="text-light-4 small-regular mb-6">SVG, PNG, JPG</p>
+                            <p className="text-light-4 small-regular mb-6">SVG, PNG, JPG, MP4, MOV, AVI</p>
 
                             <Button type="button" className="shad-button_dark_4">
                                 Select from computer
