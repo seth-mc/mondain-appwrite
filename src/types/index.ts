@@ -67,6 +67,11 @@ export type DarkModeProps = {
   isAdmin?: boolean;
 };
 
+
+export type Document = {
+  $id: string;
+}
+
 export type Page = {
     documents: Document[];
     cursor: string;  // or number, depending on how your cursor works

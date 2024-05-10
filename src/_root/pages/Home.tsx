@@ -12,7 +12,8 @@ import { DarkModeProps } from "@/types";
 const Home = ({ darkMode }: DarkModeProps) => {
   const { ref, inView } = useInView();
   // eslint-disable-next-line @typescript-eslint/ban-types
-  const { data: posts, fetchNextPage, hasNextPage } = useGetPosts() as { data: PostsQueryResult, fetchNextPage: Function, hasNextPage: boolean };  const [allPosts, setAllPosts] = useState([]);
+  const { data: posts, fetchNextPage, hasNextPage } = useGetPosts() as unknown as { data: PostsQueryResult, fetchNextPage: Function, hasNextPage: boolean };  
+  const [allPosts, setAllPosts] = useState([]);
   const [activeCategory, setActiveCategory] = useState('');
   const [searchValue, setSearchValue] = useState("");
   const debouncedSearch = useDebounce(searchValue, 500);
@@ -26,11 +27,6 @@ const Home = ({ darkMode }: DarkModeProps) => {
     setSearchValue("");
     setActiveCategory("");
   }
-
-  function modifyImageUrl(url: string, width: number = 600, height: number = 600): string {
-    return url.replace(/width=\d+/, `width=${width}`).replace(/height=\d+/, `height=${height}`);
-  }
-
   useEffect(() => {
     if (inView && hasNextPage && !searchValue && !activeCategory) {
       fetchNextPage();
@@ -45,17 +41,7 @@ const Home = ({ darkMode }: DarkModeProps) => {
     }
   }, [posts]);
 
-  useEffect(() => {
-    if (posts?.pages) {
-      const newPosts = posts.pages.flatMap(page => page.documents.map(doc => {
-        return {
-          ...doc,
-          imageUrls: doc.imageUrls.map((url: string) => modifyImageUrl(url)) // Modify each URL
-        };
-      })) as never[];
-      setAllPosts(newPosts);
-    }
-  }, [posts]);
+
 
   if (!posts)
     return (

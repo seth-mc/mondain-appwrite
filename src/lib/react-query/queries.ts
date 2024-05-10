@@ -74,8 +74,7 @@ export const useGetPosts = () => {
       }
 
       // Use the $id of the last document as the cursor.
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const lastId = lastPage?.documents[lastPage.documents.length - 1 as any].$id;
+      const lastId = lastPage?.documents[lastPage.documents.length - 1]?.$id;
       return lastId;
     },
     initialPageParam: undefined,

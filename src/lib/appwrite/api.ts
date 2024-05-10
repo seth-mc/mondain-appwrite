@@ -1,7 +1,7 @@
 import { ID, Query, ImageGravity } from "appwrite";
 
 import { appwriteConfig, account, databases, storage, avatars, graphql } from "./config";
-import { IUpdatePost, INewPost, INewUser, IUpdateUser } from "@/types";
+import { IUpdatePost, INewPost, INewUser, IUpdateUser, Page } from "@/types";
 
 
 // ============================================================
@@ -207,7 +207,7 @@ function getSingleFilePreview(fileId: string): string {
       fileId,
       800,
       800,
-      ImageGravity.Top,
+      ImageGravity.Center,
       100
     );
 
@@ -268,31 +268,36 @@ export async function searchPosts(searchTerm: string, activeCategory?: string) {
   }
 }
 
-
-export async function getInfinitePosts({ pageParam = 0 }: { pageParam: number }) {
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export async function getInfinitePosts({ pageParam = 0 }: { pageParam?: any }): Promise<Page> {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const queries: any[] = [Query.orderDesc("$updatedAt"), Query.limit(9)];
-
   if (pageParam) {
-    queries.push(Query.cursorAfter(pageParam.toString()));
+      queries.push(Query.cursorAfter(pageParam.toString()));
   }
 
   try {
-    const posts = await databases.listDocuments(
-      appwriteConfig.databaseId,
-      appwriteConfig.postCollectionId,
-      queries
-    );
+      const posts = await databases.listDocuments(
+          appwriteConfig.databaseId,
+          appwriteConfig.postCollectionId,
+          queries
+      );
 
-    if (!posts) throw Error;
+      // Assuming posts is always defined and handling when not
+      if (!posts || !posts.documents) {
+          return { documents: [], cursor: '' } as Page;  // Return an empty page structure
+      }
 
-    console.log("posts", posts);
-
-    return posts;
+      return {
+          documents: posts.documents,
+          cursor: posts.documents.length ? posts.documents[posts.documents.length - 1].$id : ''
+      } as Page;  // Use type assertion here
   } catch (error) {
-    console.log(error);
+      console.error(error);
+      return { documents: [], cursor: '' } as Page;  // Return an empty page structure in case of error
   }
 }
+
 
 // ============================== GET POST BY ID
 export async function getPostById(postId?: string) {
