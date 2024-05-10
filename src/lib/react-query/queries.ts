@@ -26,7 +26,6 @@ import {
   searchPosts,
   savePost,
   deleteSavedPost,
-  searchPostsGraphql,
   createQueuedPost,
 } from "@/lib/appwrite/api";
 import { INewPost, INewUser, IUpdatePost, IUpdateUser, Page } from "@/types";
@@ -75,7 +74,8 @@ export const useGetPosts = () => {
       }
 
       // Use the $id of the last document as the cursor.
-      const lastId = lastPage.documents[lastPage.documents.length - 1].$id;
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const lastId = lastPage?.documents[lastPage.documents.length - 1 as any].$id;
       return lastId;
     },
     initialPageParam: undefined,
@@ -264,94 +264,6 @@ export const useUpdateUser = () => {
       });
       queryClient.invalidateQueries({
         queryKey: [QUERY_KEYS.GET_USER_BY_ID, data?.$id],
-      });
-    },
-  });
-};
-
-
-export const useSearchPostsGraphql = (searchTerm: string) => {
-  return useQuery({
-    queryKey: ['searchPostsGraphql', searchTerm],
-    queryFn: () => searchPostsGraphql(searchTerm),
-    enabled: !!searchTerm,
-  });
-};
-
-
-
-
-
-
-// Search sparks in the search field
-export const useSearchSparks = (searchValue: string, activeCategory?: string) => {
-  return useQuery({
-    queryKey: [QUERY_KEYS.SEARCH_SPARKS, searchValue, activeCategory],
-    queryFn: () => searchPosts(searchValue, activeCategory),
-    enabled: !!searchValue || !!activeCategory,
-});
-};
-
-
-export const useGetRecentSparks = () => {
-  return useQuery({
-    queryKey: [QUERY_KEYS.GET_RECENT_POSTS],
-    queryFn: getRecentPosts,
-  });
-};
-
-export const useCreateSpark = () => {
-  const queryClient = useQueryClient();
-  return useMutation({
-    mutationFn: (post: INewPost) => createPost(post),
-    onSuccess: () => {
-      queryClient.invalidateQueries({
-        queryKey: [QUERY_KEYS.GET_RECENT_POSTS],
-      });
-    },
-  });
-};
-
-export const useGetSparkById = (sparkId?: string) => {
-  return useQuery({
-    queryKey: [QUERY_KEYS.GET_POST_BY_ID, sparkId],
-    queryFn: () => getPostById(sparkId),
-    enabled: !!sparkId,
-  });
-};
-
-export const useSaveSpark = () => {
-  const queryClient = useQueryClient();
-  return useMutation({
-    mutationFn: ({ userId, sparkId }: { userId: string; postId: string }) =>
-      savePost(userId, sparkId),
-    onSuccess: () => {
-      queryClient.invalidateQueries({
-        queryKey: [QUERY_KEYS.GET_RECENT_SPARKS],
-      });
-      queryClient.invalidateQueries({
-        queryKey: [QUERY_KEYS.GET_SPARKS],
-      });
-      queryClient.invalidateQueries({
-        queryKey: [QUERY_KEYS.GET_CURRENT_USER],
-      });
-    },
-  });
-};
-
-export const useDeleteSavedSpark = () => {
-  const queryClient = useQueryClient();
-  return useMutation({
-    mutationFn: (savedRecordId: string) => deleteSavedSpark(savedRecordId),
-    onSuccess: () => {
-      queryClient.invalidateQueries({
-        queryKey: [QUERY_KEYS.GET_RECENT_SPARKS],
-      });
-      queryClient.invalidateQueries({
-        queryKey: [QUERY_KEYS.GET_SPARKS],
-      });
-      queryClient.invalidateQueries({
-        queryKey: [QUERY_KEYS.GET_CURRENT_USER],
       });
     },
   });

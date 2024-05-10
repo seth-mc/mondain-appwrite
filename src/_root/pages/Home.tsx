@@ -1,30 +1,18 @@
 import { useEffect, useState } from "react";
 import { useInView } from "react-intersection-observer";
-
 import useDebounce from "@/hooks/useDebounce";
-import { Loader, MasonryLayout } from "@/components/shared";
+import { Loader, MasonryLayout, SearchResults } from "@/components/shared";
 import { useGetPosts, useSearchPosts } from "@/lib/react-query/queries";
 import { categories } from "@/constants";
-import { SearchResultProps } from "@/types";
+import { PostsQueryResult } from "@/types";
 import { DarkModeProps } from "@/types";
 
-
-const SearchResults = ({ isSearchFetching, searchedPosts }: SearchResultProps) => {
-  if (isSearchFetching) {
-    return <Loader />;
-  } else if (searchedPosts?.documents?.length > 0) {
-
-    return <MasonryLayout posts={searchedPosts.documents} />;
-  } else {
-    return <p className="text-light-4 mt-10 text-center w-full">No results found</p>;
-  }
-};
 
 
 const Home = ({ darkMode }: DarkModeProps) => {
   const { ref, inView } = useInView();
-  const { data: posts, fetchNextPage, hasNextPage } = useGetPosts();
-  const [allPosts, setAllPosts] = useState([]);
+  // eslint-disable-next-line @typescript-eslint/ban-types
+  const { data: posts, fetchNextPage, hasNextPage } = useGetPosts() as { data: PostsQueryResult, fetchNextPage: Function, hasNextPage: boolean };  const [allPosts, setAllPosts] = useState([]);
   const [activeCategory, setActiveCategory] = useState('');
   const [searchValue, setSearchValue] = useState("");
   const debouncedSearch = useDebounce(searchValue, 500);
@@ -52,6 +40,7 @@ const Home = ({ darkMode }: DarkModeProps) => {
   useEffect(() => {
     if (posts?.pages) {
       const newPosts = posts.pages.flatMap(page => page.documents) as never[];
+      console.log("newPosts", newPosts);
       setAllPosts(newPosts);
     }
   }, [posts]);

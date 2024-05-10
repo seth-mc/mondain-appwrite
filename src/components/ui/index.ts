@@ -6,4 +6,3 @@ export * from './textarea';
 export * from './use-toast';
 export * from './select';
 export * from './popover';
-export * from "./date-time-picker/DateTimePicker";

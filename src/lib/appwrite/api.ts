@@ -213,7 +213,7 @@ function getSingleFilePreview(fileId: string): string {
 
     if (!fileUrl) throw Error;
 
-    return fileUrl;
+    return fileUrl.toString(); // Convert URL to string
   } catch (error) {
     console.error(error);
     return ''; // Return a default value or handle the error as needed
@@ -270,6 +270,7 @@ export async function searchPosts(searchTerm: string, activeCategory?: string) {
 
 
 export async function getInfinitePosts({ pageParam }: { pageParam: number }) {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const queries: any[] = [Query.orderDesc("$updatedAt"), Query.limit(9)];
 
   if (pageParam) {
@@ -316,7 +317,7 @@ export async function updatePost(post: IUpdatePost) {
 
   try {
     let images = {
-      imageUrls: post.imageUrls || [],
+      imageUrls: post.imageUrls as URL[] || [],
       imageIds: post.imageIds || [],
     };
 
@@ -326,7 +327,7 @@ export async function updatePost(post: IUpdatePost) {
       if (uploadedFiles.length === 0) throw Error;
 
       // Get new file urls
-      const newFileUrls = uploadedFiles.map(file => getFilePreview(file.$id));
+      const newFileUrls = uploadedFiles.map(file => new URL(getFilePreview(file.$id)));
       if (newFileUrls.length === 0) {
         uploadedFiles.forEach(file => deleteFile(file.$id));
         throw Error;
@@ -533,9 +534,9 @@ export async function createQueuedPost(post: INewPost) {
 }
 
 // ============================== FUNCTION TO MOVE POST FROM QUEUE TO MAIN POSTS COLLECTION
-export async function transferPostToMain(postId: string) {
+/*export async function transferPostToMain(postId: string) {
   // Add logic to move the post
-}
+}*/
 
 // ============================================================
 // USER
@@ -543,6 +544,7 @@ export async function transferPostToMain(postId: string) {
 
 // ============================== GET USERS
 export async function getUsers(limit?: number) {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const queries: any[] = [Query.orderDesc("$createdAt")];
 
   if (limit) {
@@ -592,17 +594,17 @@ export async function updateUser(user: IUpdateUser) {
 
     if (hasFileToUpdate) {
       // Upload new file to appwrite storage
-      const uploadedFile = await uploadFile(user.file[0]);
+      const uploadedFile = await uploadFiles(user.file);
       if (!uploadedFile) throw Error;
 
       // Get new file url
-      const fileUrl = getFilePreview(uploadedFile.$id);
+      const fileUrl = getFilePreview(uploadedFile[0].$id);
       if (!fileUrl) {
-        await deleteFile(uploadedFile.$id);
+        await deleteFile(uploadedFile[0].$id);
         throw Error;
       }
 
-      image = { ...image, imageUrl: fileUrl, imageId: uploadedFile.$id };
+      image = { ...image, imageUrl: fileUrl, imageId: uploadedFile[0].$id };
     }
 
     //  Update user
@@ -752,6 +754,7 @@ export async function searchSparks(searchTerm: string, activeCategory?: string) 
 }
 
 export async function getInfiniteSparks({ pageParam }: { pageParam: number }) {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const queries: any[] = [Query.orderDesc("$updatedAt"), Query.limit(9)];
 
   if (pageParam) {
@@ -787,126 +790,6 @@ export async function getSparkById(postId?: string) {
     if (!post) throw Error;
 
     return post;
-  } catch (error) {
-    console.log(error);
-  }
-}
-
-// ============================== UPDATE POST
-export async function updateSpark(post: IUpdatePost) {
-  const hasFilesToUpdate = post.file.length > 0;
-
-  try {
-    let images = {
-      imageUrls: post.imageUrls || [],
-      imageIds: post.imageIds || [],
-    };
-
-    if (hasFilesToUpdate) {
-      // Upload new files to Appwrite storage
-      const uploadedFiles = await uploadFiles(post.file);
-      if (uploadedFiles.length === 0) throw Error;
-
-      // Get new file urls
-      const newFileUrls = uploadedFiles.map(file => getFilePreview(file.$id));
-      if (newFileUrls.length === 0) {
-        uploadedFiles.forEach(file => deleteFile(file.$id));
-        throw Error;
-      }
-
-      images = {
-        imageUrls: [...images.imageUrls, ...newFileUrls],
-        imageIds: [...images.imageIds, ...uploadedFiles.map(file => file.$id)],
-      };
-    }
-
-    // Convert tags into array
-    const tags = post.tags?.replace(/ /g, "").split(",") || [];
-
-    // Update post with multiple image URLs
-    const updatedPost = await databases.updateDocument(
-      appwriteConfig.databaseId,
-      appwriteConfig.postCollectionId,
-      post.postId,
-      {
-        caption: post.caption,
-        imageUrls: images.imageUrls,
-        imageIds: images.imageIds,
-        location: post.location,
-        tags: tags,
-      }
-    );
-
-    if (!updatedPost) {
-      if (hasFilesToUpdate) {
-        images.imageIds.forEach(id => deleteFile(id));
-      }
-      throw Error;
-    }
-
-    // Optionally delete old files if necessary
-    // ...
-
-    return updatedPost;
-  } catch (error) {
-    console.log(error);
-  }
-}
-
-
-// ============================== DELETE POST
-export async function deleteSpark(postId?: string, imageId?: string) {
-  if (!postId || !imageId) return;
-
-  try {
-    const statusCode = await databases.deleteDocument(
-      appwriteConfig.databaseId,
-      appwriteConfig.postCollectionId,
-      postId
-    );
-
-    if (!statusCode) throw Error;
-
-    await deleteFile(imageId);
-
-    return { status: "Ok" };
-  } catch (error) {
-    console.log(error);
-  }
-}
-
-// ============================== SAVE POST
-export async function saveSpark(userId: string, postId: string) {
-  try {
-    const updatedPost = await databases.createDocument(
-      appwriteConfig.databaseId,
-      appwriteConfig.savesCollectionId,
-      ID.unique(),
-      {
-        user: userId,
-        post: postId,
-      }
-    );
-
-    if (!updatedPost) throw Error;
-
-    return updatedPost;
-  } catch (error) {
-    console.log(error);
-  }
-}
-// ============================== DELETE SAVED POST
-export async function deleteSavedSpark(savedRecordId: string) {
-  try {
-    const statusCode = await databases.deleteDocument(
-      appwriteConfig.databaseId,
-      appwriteConfig.savesCollectionId,
-      savedRecordId
-    );
-
-    if (!statusCode) throw Error;
-
-    return { status: "Ok" };
   } catch (error) {
     console.log(error);
   }

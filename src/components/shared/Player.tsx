@@ -1,8 +1,33 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import React from 'react';
 
+declare global {
+    interface Window {
+        SC: any;
+    }
+}
 
-export default class PlayerComponent extends React.Component {
-    constructor(props) {
+interface State {
+    playertitle: string;
+    time: string;
+    playButtonState: string;
+    button: string;
+    playerOpen: boolean | string | null;
+    playerwidth: string;
+    record: string;
+    duration: string,
+    playlistimg: string;
+    playlistlink: string;
+    isWidgetReady: boolean;
+}
+
+
+export default class PlayerComponent extends React.Component<object, State> {
+    wrapperRef: React.RefObject<HTMLDivElement>;
+    widget: any;
+    intervalId: NodeJS.Timeout | undefined;
+
+    constructor(props: any) {
         super(props);
 
         this.state = {
@@ -13,12 +38,14 @@ export default class PlayerComponent extends React.Component {
             playerOpen: null,
             playerwidth: "0px",
             record: "record d",
+            duration: "",
             playlistimg: "https://i.scdn.co/image/ab67706c0000da849f1ccfe5d6e7306da42767b2",
             playlistlink: "https://open.spotify.com/playlist/3Pu801hrpVuQAlDLPrMgXo?si=0b4c6f4d8ac1473c",
+            isWidgetReady: false,
         };
         this.wrapperRef = React.createRef();
         this.handleClickOutside = this.handleClickOutside.bind(this);
-        this.player = null;
+        this.widget = React.createRef();
         this.nextSong = this.nextSong.bind(this);
     }
 
@@ -29,14 +56,20 @@ export default class PlayerComponent extends React.Component {
         script.async = true;
         document.body.appendChild(script);
 
+        const originalConsoleError = console.error;
+
+
         script.onload = () => {
+             // Restore console.error
+        console.error = originalConsoleError;
+
             const iframeElement = document.querySelector("iframe.sc-widget");
             if (!iframeElement) {
                 console.error("No iframe with class 'sc-widget' found.");
                 return;
             }
-            this.player = window.SC.Widget(iframeElement);
-            this.player.bind(window.SC.Widget.Events.READY, () => {
+            this.widget = window.SC.Widget(iframeElement) as any;
+            this.widget.bind(window.SC.Widget.Events.READY, () => {
                 this.setState({ isWidgetReady: true }); // Set state to indicate widget is ready
                 this.initPlayer();
             });
@@ -44,20 +77,20 @@ export default class PlayerComponent extends React.Component {
     }
 
     initPlayer() {
-        this.randomSong(this.player);
+        this.randomSong(this.widget);
         this.setupPlayerBindings();
         this.setupPeriodicUpdates();
     }
 
-    randomSong(player) {
-        let randomVal = Math.random() * 10;
+    randomSong(player: any) {
+        const randomVal = Math.random() * 10;
         for (let i = 0; i < randomVal; i++) {
             player.next();
         }
     }
 
     setupPlayerBindings() {
-        this.player.getCurrentSound((song) => {
+        this.widget.getCurrentSound((song: any) => {
             this.setState({
                 playertitle: song.title + ' - ' + song.artist,
                 playButtonState: "player__button__play",
@@ -65,16 +98,16 @@ export default class PlayerComponent extends React.Component {
             });
         });
 
-        this.player.bind(window.SC.Widget.Events.PLAY, () => {
+        this.widget.bind(window.SC.Widget.Events.PLAY, () => {
             this.setState({ playButtonState: "player__button__pause", record: "record rotate d" });
         });
 
-        this.player.bind(window.SC.Widget.Events.PAUSE, () => {
+        this.widget.bind(window.SC.Widget.Events.PAUSE, () => {
             this.setState({ playButtonState: "player__button__play", record: "record rotate paused d" });
         });
 
-        this.player.bind(window.SC.Widget.Events.FINISH, () => {
-            this.randomSong(this.player);
+        this.widget.bind(window.SC.Widget.Events.FINISH, () => {
+            this.randomSong(this.widget);
         });
     }
 
@@ -82,10 +115,10 @@ export default class PlayerComponent extends React.Component {
         this.intervalId = setInterval(() => {
             if (this.state.isWidgetReady) {
                 try {
-                    this.player.getCurrentSound((song) => {
+                    this.widget.getCurrentSound((song: any) => {
                         this.setState({ playertitle: song.title });
                     });
-                    this.player.getPosition((position) => {
+                    this.widget.getPosition((position: any) => {
                         this.setState({ time: this.formatTime(position / 1000) });
                     });
                 } catch (error) {
@@ -100,26 +133,28 @@ export default class PlayerComponent extends React.Component {
         clearInterval(this.intervalId);
     }
 
-    handleClickOutside(event) {
+    handleClickOutside(event: any) {
         if (this.wrapperRef) {
-            if (this.wrapperRef && !this.wrapperRef.current.contains(event.target)) {
-                this.setState({
-                    playerOpen: null,
-                    playerwidth: "0px",
-                });
+            if (this.wrapperRef.current) {
+                if (this.wrapperRef && !this.wrapperRef.current.contains(event.target)) {
+                    this.setState({
+                        playerOpen: null,
+                        playerwidth: "0px",
+                    });
+                }
             }
         }
     }
 
     setPlayButton() {
-        if (this.player) {
-            this.player.toggle();
+        if (this.widget) {
+            this.widget.toggle();
         }
     }
 
     nextSong() {
-        if (this.player) {
-            this.player.next();
+        if (this.widget) {
+            this.widget.next();
         }
     }
 
@@ -137,7 +172,7 @@ export default class PlayerComponent extends React.Component {
         }
     }
 
-    formatTime(time) {
+    formatTime(time: any) {
         const minutes = Math.floor(time / 60);
         const seconds = Math.floor(time % 60)
             .toString()

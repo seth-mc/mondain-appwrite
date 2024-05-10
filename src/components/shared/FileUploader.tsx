@@ -1,7 +1,6 @@
 import { useCallback, useEffect, useState } from "react";
 import { FileWithPath, useDropzone } from "react-dropzone";
 import { Button } from "@/components/ui";
-import { convertFileToUrl } from "@/lib/utils";
 import Upscaler from "upscaler";
 
 
@@ -18,8 +17,12 @@ type uploadAsset = {
 }
 
 const dataURLtoBlob = (dataurl: string) => {
-    let arr = dataurl.split(','), mime = arr[0].match(/:(.*?);/)[1],
-        bstr = atob(arr[1]), n = bstr.length, u8arr = new Uint8Array(n);
+    const arr = dataurl.split(',');
+    const mime = arr[0].match(/:(.*?);/)?.[1]; // Add null check
+    const bstr = atob(arr[1]);
+    let n = bstr.length;
+    const u8arr = new Uint8Array(n);
+
     while (n--) {
         u8arr[n] = bstr.charCodeAt(n);
     }
@@ -28,11 +31,9 @@ const dataURLtoBlob = (dataurl: string) => {
 
 const blobToFile = (blob: Blob, filename: string): File => {
     return new File([blob], filename, { type: blob.type, lastModified: Date.now() });
-  }
+}
 
-const FileUploader = ({ fieldChange, mediaUrls, }: FileUploaderProps) => {
-    const [file, setFile] = useState<File[]>([]);
-    const [fileUrls, setFileUrls] = useState<string[]>(mediaUrls);
+const FileUploader = ({ fieldChange }: FileUploaderProps) => {
     const [uploadAssets, setuploadAssets] = useState<uploadAsset[]>([]);
 
 
@@ -141,7 +142,8 @@ const FileUploader = ({ fieldChange, mediaUrls, }: FileUploaderProps) => {
     // Use useEffect to update the parent state when imageAssets changes
     useEffect(() => {
         const files = uploadAssets.map(asset => asset.file);
-        fieldChange(files);
+        const uploadAssetFiles = files.map(file => ({ url: '', file, type: file.type }));
+        fieldChange(uploadAssetFiles);
     }, [uploadAssets, fieldChange]);
 
 

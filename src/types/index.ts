@@ -56,6 +56,7 @@ export type INewUser = {
 
 export type SearchResultProps = {
   isSearchFetching: boolean;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   searchedPosts: any;
 
 };
@@ -68,4 +69,41 @@ export type DarkModeProps = {
 
 export type Page = {
   documents: Document[];
+};
+
+
+export type Creator = {
+  name: string;
+  username: string;
+  accountId: string;
+  email: string;
+  bio: string | null;
+  imageUrl: string;
+  // add other properties if needed
+};
+
+export type DocumentType = {
+  caption: string;
+  tags: string[];
+  location: string;
+  imageUrls: string[];
+  imageIds: string[];
+  category: string;
+  thumbnailUrl: string | null;
+  $id: string;
+  $createdAt: string;
+  $updatedAt: string;
+  $permissions: string[];
+  creator: Creator;
+  // add other properties if needed
+};
+
+export type PostPage = {
+  documents: DocumentType[];
+  // other properties...
+};
+
+export type PostsQueryResult = {
+  pages: PostPage[];
+  // other properties...
 };
