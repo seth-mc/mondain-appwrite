@@ -1,10 +1,10 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 
 type ImageSwitcherProps = {
     imageUrls: string[];
 };
 
-const ImageSwitcher: = ({ imageUrls }: ImageSwitcherProps) => {
+const ImageSwitcher = ({ imageUrls }: ImageSwitcherProps) => {
     const [currentIndex, setCurrentIndex] = useState(0);
 
     // Preload images
