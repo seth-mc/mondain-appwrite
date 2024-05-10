@@ -1,4 +1,4 @@
-import { ID, Query } from "appwrite";
+import { ID, Query, ImageGravity } from "appwrite";
 
 import { appwriteConfig, account, databases, storage, avatars, graphql } from "./config";
 import { IUpdatePost, INewPost, INewUser, IUpdateUser } from "@/types";
@@ -205,9 +205,9 @@ function getSingleFilePreview(fileId: string): string {
     const fileUrl = storage.getFilePreview(
       appwriteConfig.storageId,
       fileId,
-      2000,
-      2000,
-      "top",
+      800,
+      800,
+      ImageGravity.Top,
       100
     );
 
@@ -269,7 +269,7 @@ export async function searchPosts(searchTerm: string, activeCategory?: string) {
 }
 
 
-export async function getInfinitePosts({ pageParam }: { pageParam: number }) {
+export async function getInfinitePosts({ pageParam = 0 }: { pageParam: number }) {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const queries: any[] = [Query.orderDesc("$updatedAt"), Query.limit(9)];
 
@@ -285,6 +285,8 @@ export async function getInfinitePosts({ pageParam }: { pageParam: number }) {
     );
 
     if (!posts) throw Error;
+
+    console.log("posts", posts);
 
     return posts;
   } catch (error) {

@@ -68,8 +68,9 @@ export type DarkModeProps = {
 };
 
 export type Page = {
-  documents: Document[];
-};
+    documents: Document[];
+    cursor: string;  // or number, depending on how your cursor works
+}
 
 
 export type Creator = {
