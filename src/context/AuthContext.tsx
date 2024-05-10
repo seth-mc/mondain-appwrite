@@ -1,9 +1,8 @@
-import { useNavigate } from "react-router-dom";
 import { createContext, useContext, useEffect, useState } from "react";
-
 import { IUser } from "@/types";
 import { getCurrentUser } from "@/lib/appwrite/api";
 
+// eslint-disable-next-line react-refresh/only-export-components
 export const INITIAL_USER = {
   id: "",
   name: "",
@@ -11,6 +10,7 @@ export const INITIAL_USER = {
   email: "",
   imageUrl: "",
   bio: "",
+  admin: false,
 };
 
 const INITIAL_STATE = {
@@ -34,7 +34,6 @@ type IContextType = {
 const AuthContext = createContext<IContextType>(INITIAL_STATE);
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
-  const navigate = useNavigate();
   const [user, setUser] = useState<IUser>(INITIAL_USER);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
@@ -43,7 +42,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     setIsLoading(true);
     try {
       const currentAccount = await getCurrentUser();
-      console.log("Current Account", currentAccount);
+      
       if (currentAccount) {
         setUser({
           id: currentAccount.$id,
@@ -55,13 +54,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           admin: currentAccount.admin,
         });
 
-        console.log("User is authenticated", currentAccount);
+        
         setIsAuthenticated(true);
 
         return true;
       } 
 
-      console.log("No current account found");
+      
       return false;
     } catch (error) {
       console.error("Error fetching current user", error);
@@ -97,7 +96,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     checkAuthUser,
   };
 
-  console.log("AuthContext value", value);
+  
 
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
@@ -107,6 +106,6 @@ export default AuthProvider;
 
 export const useUserContext = () => {
   const context = useContext(AuthContext);
-  console.log("useUserContext", context);
+  
   return context;
 };

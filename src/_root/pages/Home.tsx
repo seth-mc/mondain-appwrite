@@ -29,7 +29,6 @@ const Home = ({ darkMode }: DarkModeProps) => {
   const [searchValue, setSearchValue] = useState("");
   const debouncedSearch = useDebounce(searchValue, 500);
   const { data: searchedPosts, isFetching: isSearchFetching } = useSearchPosts(debouncedSearch, activeCategory);
-
   const cookieFallback = localStorage.getItem("cookieFallback");
   const newToSite = cookieFallback === "[]" || cookieFallback === null || cookieFallback === undefined;
 
@@ -40,7 +39,7 @@ const Home = ({ darkMode }: DarkModeProps) => {
     setActiveCategory("");
   }
 
-  function modifyImageUrl(url, width = 600, height = 600) {
+  function modifyImageUrl(url: string, width: number = 600, height: number = 600): string {
     return url.replace(/width=\d+/, `width=${width}`).replace(/height=\d+/, `height=${height}`);
   }
 
@@ -52,7 +51,7 @@ const Home = ({ darkMode }: DarkModeProps) => {
 
   useEffect(() => {
     if (posts?.pages) {
-      const newPosts = posts.pages.flatMap(page => page.documents);
+      const newPosts = posts.pages.flatMap(page => page.documents) as never[];
       setAllPosts(newPosts);
     }
   }, [posts]);
@@ -62,9 +61,9 @@ const Home = ({ darkMode }: DarkModeProps) => {
       const newPosts = posts.pages.flatMap(page => page.documents.map(doc => {
         return {
           ...doc,
-          imageUrls: doc.imageUrls.map(url => modifyImageUrl(url)) // Modify each URL
+          imageUrls: doc.imageUrls.map((url: string) => modifyImageUrl(url)) // Modify each URL
         };
-      }));
+      })) as never[];
       setAllPosts(newPosts);
     }
   }, [posts]);

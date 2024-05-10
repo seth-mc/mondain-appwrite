@@ -4,7 +4,7 @@ import { Models } from 'appwrite';
 
 type PostsProps = {
   posts: Models.Document[];
-  newToSite: boolean;
+  newToSite?: boolean;
 };
 
 const breakpointColumnsObj = {

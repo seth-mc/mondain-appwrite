@@ -14,7 +14,7 @@ const itemVariants: Variants = {
   closed: { opacity: 0, y: 20, transition: { duration: 0.2 } }
 };
 
-export function ProfileDropdown({ isAdmin, darkMode, toggleDarkMode }: { darkMode: boolean, toggleDarkMode: () => void }) {
+export function ProfileDropdown({ isAdmin, darkMode, toggleDarkMode }: { isAdmin?: boolean, darkMode: boolean, toggleDarkMode: () => void }) {
   const navigate = useNavigate();
   const { user, setUser, setIsAuthenticated, isLoading } = useUserContext();
   const { mutate: signOut } = useSignOutAccount();
@@ -27,7 +27,7 @@ export function ProfileDropdown({ isAdmin, darkMode, toggleDarkMode }: { darkMod
     e.preventDefault();
     signOut();
     setIsAuthenticated(false);
-    setUser(INITIAL_USER);
+    setUser(prevUser => ({ ...prevUser, ...INITIAL_USER }));
     navigate("/sign-in");
   };
 
@@ -131,11 +131,10 @@ export function ProfileDropdown({ isAdmin, darkMode, toggleDarkMode }: { darkMod
             ) : (
               <div></div>
             )}
-            <motion.li variants={itemVariants} onClick={(e) => handleSignOut(e)} className="flex text-dark-1 hover:text-light-3 items-center p-2 px-8 hover:bg-gray-100">
+            <motion.button variants={itemVariants} onClick={(e) => handleSignOut(e)} className="flex text-dark-1 hover:text-light-3 items-center p-2 px-8 hover:bg-gray-100">
               <img className="mr-2 h-4 w-4" src="/assets/icons/logout.svg" alt="logout" />
               <span>Log out</span>
-
-            </motion.li>
+            </motion.button>
 
           </motion.ul>
         </motion.nav>

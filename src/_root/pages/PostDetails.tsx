@@ -1,19 +1,15 @@
-import { Loader, MasonryLayout } from "@/components/shared";
-import { useParams, useNavigate } from 'react-router-dom';
+import { Loader } from "@/components/shared";
+import { useParams } from 'react-router-dom';
 
 import { useState, useEffect } from 'react';
-import { useGetPostById, useGetUserPosts } from "@/lib/react-query/queries";
-import { useUserContext } from "@/context/AuthContext";
+import { useGetPostById } from "@/lib/react-query/queries";
 import { multiFormatDateString } from "@/lib/utils";
 //import { multiFormatDateString } from "@/lib/utils";
 
 const PostDetails = () => {
-  const navigate = useNavigate();
   const { id } = useParams();
-  const { user } = useUserContext();
 
   const { data: post, isLoading } = useGetPostById(id);
-  const { data: userPosts, isLoading: isUserPostLoading } = useGetUserPosts(post?.creator.$id);
 
   // Preload images
   useEffect(() => {
@@ -23,7 +19,6 @@ const PostDetails = () => {
     });
   }, [post?.imageUrls]);
 
-  const relatedPosts = userPosts?.documents.filter((userPost) => userPost.$id !== id);
 
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
 

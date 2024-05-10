@@ -53,15 +53,17 @@ export type INewUser = {
   password: string;
 };
 
+
 export type SearchResultProps = {
   isSearchFetching: boolean;
   searchedPosts: any;
+
 };
 
 export type DarkModeProps = {
-  isAdmin: boolean;
   darkMode: boolean;
-  toggleDarkMode: () => void;
+  toggleDarkMode?: () => void;
+  isAdmin?: boolean;
 };
 
 export type Page = {

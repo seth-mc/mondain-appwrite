@@ -2,15 +2,16 @@ import { multiFormatDateString } from '@/lib/utils';
 import { Models } from 'appwrite';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
+
 type PostProps = {
     post: Models.Document;
-    newToSite: boolean;
+    newToSite?: boolean;
 }
 
 const Post = ({ post, newToSite }: PostProps) => {
     const navigate = useNavigate();
   
-    const { creator, imageUrls, $id } = post;
+    const { imageUrls, $id } = post;
 
     const handlePostClick = () => {
       if (newToSite) {

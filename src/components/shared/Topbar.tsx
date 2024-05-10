@@ -83,7 +83,7 @@ const Topbar = ({ isAdmin, darkMode, toggleDarkMode }: DarkModeProps) => {
 
         {/* Profile Dropdown always on the right */}
       <div className="max-w-[40px] flex gap-3">
-        <ProfileDropdown isAdmin={isAdmin} darkMode={darkMode} toggleDarkMode={toggleDarkMode}/>
+        <ProfileDropdown isAdmin={isAdmin} darkMode={darkMode} toggleDarkMode={toggleDarkMode || (() => {})}/>
       </div>
     </div>
   );

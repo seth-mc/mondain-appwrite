@@ -19,8 +19,6 @@ const App = () => {
 
   const { user } = useUserContext();
 
-  console.log("User", user);
-
 
   // Check if the user has the "admin" label
   const isAdmin = user && user.admin;
@@ -35,12 +33,12 @@ const App = () => {
         </Route>
         <Route element={<RootLayout isAdmin={isAdmin} darkMode={darkMode} toggleDarkMode={toggleDarkMode} />}>
           <Route index element={<Home darkMode={darkMode} toggleDarkMode={toggleDarkMode} />} />
-          <Route path="/dj" element={<Dj darkMode={darkMode} toggleDarkMode={toggleDarkMode} />} />
+          <Route path="/dj" element={<Dj />} />
 
           {/* private routes */}
           {isAdmin && (
             <Route>
-              <Route path="/admin" element={<Admin />} />
+              <Route path="/admin" element={<Admin darkMode={darkMode} />} />
               <Route path="/create-post" element={<CreatePost />} />
             </Route>
           )}
