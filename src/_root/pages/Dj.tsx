@@ -131,7 +131,7 @@ const Scene = () => {
       <directionalLight intensity={0.5} />
         <ambientLight intensity={0.1} />
         <Suspense fallback={null}>
-        <Model />
+        <Model scale= {0.3} />
         </Suspense>
     </group>
   );

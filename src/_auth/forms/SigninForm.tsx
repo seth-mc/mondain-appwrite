@@ -8,7 +8,7 @@ import Loader from "@/components/shared/Loader";
 
 
 import { SigninValidation } from "@/lib/validation";
-import { useSignInAccount, useGetAccount } from "@/lib/react-query/queries";
+import { useSignInAccount } from "@/lib/react-query/queries";
 import { useUserContext } from "@/context/AuthContext";
 
 const SigninForm = () => {
@@ -17,8 +17,7 @@ const SigninForm = () => {
   const { checkAuthUser, isLoading: isUserLoading } = useUserContext();
 
   // Query
-  const { mutateAsync: signInAccount, isLoading } = useSignInAccount();
-  const { mutateAsync: getAccountDetails } = useGetAccount();
+  const { mutateAsync: signInAccount, isPending } = useSignInAccount();
 
 
   const form = useForm<z.infer<typeof SigninValidation>>({
@@ -43,11 +42,9 @@ const SigninForm = () => {
     if (isLoggedIn) {
       form.reset();
 
-      const userDetails = await getAccountDetails();
 
   
       // Check if the user has the "admin" label
-      const isAdmin = userDetails?.labels?.includes('admin');
   
       // Navigate to the appropriate page
       navigate("/");
@@ -100,7 +97,7 @@ const SigninForm = () => {
           />
 
           <Button type="submit" className="shad-button_primary">
-            {isLoading || isUserLoading ? (
+            {isPending || isUserLoading ? (
               <div className="flex-center gap-2">
                 <Loader /> Loading...
               </div>
