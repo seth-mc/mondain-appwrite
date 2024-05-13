@@ -1,9 +1,10 @@
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { sections } from '@/constants';
 import { ProfileDropdown } from './ProfileDropdown';
 import { DarkModeProps } from '@/types';
 import { motion, Variants } from "framer-motion";
+import { Headset, Home, Menu, Shirt } from 'lucide-react';
 
 
 const itemVariants: Variants = {
@@ -17,12 +18,29 @@ const itemVariants: Variants = {
 
 const Topbar = ({ isAdmin, darkMode, toggleDarkMode }: DarkModeProps) => {
   const [isOpen, setIsOpen] = useState(false);
+  const dropdownRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    function handleClickOutside(event: any) {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+        setIsOpen(false);
+      }
+    }
+  
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, []);
+
   return (
-    <div className="!z-10 flex justify-between w-full mt-5 pb-7 px-5">
-    <div className="flex items-center">
+    <div className="!z-20 d flex justify-between w-full mt-5 pb-7 px-5">
+    <div className="bg-light-1 text-dark-1 flex items-center">
       {/* Hamburger Menu for small screens */}
       <div className="md:hidden">
       <motion.nav
+        ref={dropdownRef}
         initial={false}
         animate={isOpen ? "open" : "closed"}
       >
@@ -30,10 +48,10 @@ const Topbar = ({ isAdmin, darkMode, toggleDarkMode }: DarkModeProps) => {
           whileTap={{ scale: 0.90 }}
           onClick={() => setIsOpen(!isOpen)}
         >
-              <img src="/assets/icons/menu.svg" alt="Menu" className="p-2 text-dark-1 font-spacemono rounded-full" />
+              <Menu size={36} className="p-2"/>
               </motion.button>
               <motion.ul
-        className="absolute left-0 top-0 mt-20 ml-2 rounded-lg bg-light-1 text-dark-1  border-dark-1 shadow-lg overflow-hidden"
+            className="absolute !z-20 left-0 top-0 mt-20 ml-2 rounded-lg bg-light-1  border-dark-1 shadow-lg overflow-hidden"
         variants={{
           open: {
             clipPath: "inset(0% 0% 0% 0% round 10px)",
@@ -57,14 +75,34 @@ const Topbar = ({ isAdmin, darkMode, toggleDarkMode }: DarkModeProps) => {
         style={{ pointerEvents: isOpen ? "auto" : "none" }}
       >
             
-              {sections.map((section) => (
-                <motion.li variants={itemVariants} key={section.label}
-                className="flex items-center p-2 px-8 hover:bg-gray-100">
-                    <Link to={section.route} className="font-spacemono rounded-full">
-                      {section.label}
-                    </Link>
-                    </motion.li>
-              ))}
+            <Link to={`/`}>
+                <motion.li variants={itemVariants}
+                  className="flex items-center p-2 px-8 text-dark-1 hover:text-light-3 hover:bg-gray-100"
+                >
+                  <Home className="mr-2" size={16} />
+                  <span>Home</span>
+                </motion.li>
+              </Link>
+
+              <Link to={`/dj`}>
+                <motion.li variants={itemVariants}
+                  className="flex items-center p-2 px-8 text-dark-1 hover:text-light-3 hover:bg-gray-100"
+                >
+                  <Headset className="mr-2" size={16} />
+                  <span>DJ</span>
+                </motion.li>
+              </Link>
+
+              <Link to={`/the-rack`}>
+                <motion.li variants={itemVariants}
+                  className="flex items-center p-2 px-8 text-dark-1 hover:text-light-3 hover:bg-gray-100"
+                >
+                  <Shirt className="mr-2" size={16} />
+                  <span>The Rack</span>
+                </motion.li>
+              </Link>
+
+
             </motion.ul>
                 </motion.nav>
         </div>

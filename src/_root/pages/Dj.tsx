@@ -149,13 +149,13 @@ const Dj = () => {
       setCube(CubeLoader());
     }, 3);
 
-    useGLTF.preload('/assets/dj.glb')
+    
 
     setTimeout(() => {
       setLoading(false);   
      }, 3000)
 
-     // do 3d stuff here
+     useGLTF.preload('/assets/dj.glb')
 
     return () => clearInterval(interval);
   }, []);

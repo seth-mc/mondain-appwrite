@@ -4,6 +4,7 @@ import { useParams } from 'react-router-dom';
 import { useState, useEffect } from 'react';
 import { useGetPostById } from "@/lib/react-query/queries";
 import { multiFormatDateString } from "@/lib/utils";
+import { ChevronLeft, ChevronRight } from "lucide-react";
 //import { multiFormatDateString } from "@/lib/utils";
 
 const PostDetails = () => {
@@ -53,14 +54,14 @@ const PostDetails = () => {
                   onClick={() => handleImageSwitch('prev')}
                   className="absolute w-12 top-1/2 left-2 transform -translate-y-1/2 text-white p-2 rounded-full text-2xl outline-none"
                 >
-                  <img src="/assets/icons/arrow-left.svg" alt="arrow" />
+                  <ChevronLeft />
                 </button>
                 <button
                   type="button"
                   onClick={() => handleImageSwitch('next')}
                   className="absolute w-12 top-1/2 right-2 transform -translate-y-1/2 text-white p-2 rounded-full text-2xl outline-none"
                 >
-                  <img src="/assets/icons/arrow-right.svg" alt="arrow" />
+                  <ChevronRight />
                 </button>
               </>
             )}

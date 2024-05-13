@@ -9,8 +9,9 @@ import Loader from "@/components/shared/Loader";
 import { useCreateUserAccount, useSignInAccount } from "@/lib/react-query/queries";
 import { SignupValidation } from "@/lib/validation";
 import { useUserContext } from "@/context/AuthContext";
+import { DarkModeProps } from "@/types";
 
-const SignupForm = () => {
+const SignupForm = ({ darkMode }: DarkModeProps) => {
   const { toast } = useToast();
   const navigate = useNavigate();
   const { checkAuthUser, isLoading: isUserLoading } = useUserContext();
@@ -73,12 +74,12 @@ const { mutateAsync: signInAccount, isPending: isSigningInUser } = useSignInAcco
   return (
     <Form {...form}>
       <div className="sm:w-420 flex-center flex-col">
-        <img src="/assets/images/logo-black.svg" alt="logo" />
+        <img className={`d cursor-pointer w-52 ${darkMode ? 'invert' : ''}`} src="/assets/images/logo-black.svg" alt="logo" />
 
-        <h2 className="h3-bold md:h2-bold pt-5 sm:pt-12">
+        <h2 className="shad-form_label h3-bold md:h2-bold pt-5 sm:pt-12">
           Create a new account
         </h2>
-        <p className="text-light-3 small-medium md:base-regular mt-2">
+        <p className="shad-form_label text-light-3 small-medium md:base-regular mt-2">
           To enter Mondain, Please create an account.
         </p>
 
@@ -90,9 +91,9 @@ const { mutateAsync: signInAccount, isPending: isSigningInUser } = useSignInAcco
             name="name"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Name</FormLabel>
+                <FormLabel className="shad-form_label">Name</FormLabel>
                 <FormControl>
-                  <Input type="text" className="shad-input" {...field} />
+                  <Input type="text" className="shad-input text-dark-1" {...field} />
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -104,9 +105,9 @@ const { mutateAsync: signInAccount, isPending: isSigningInUser } = useSignInAcco
             name="username"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Username</FormLabel>
+                <FormLabel className="shad-form_label">Username</FormLabel>
                 <FormControl>
-                  <Input type="text" className="shad-input" {...field} />
+                  <Input type="text" className="shad-input text-dark-1" {...field} />
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -118,9 +119,9 @@ const { mutateAsync: signInAccount, isPending: isSigningInUser } = useSignInAcco
             name="email"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Email</FormLabel>
+                <FormLabel className="shad-form_label ">Email</FormLabel>
                 <FormControl>
-                  <Input type="text" className="shad-input" {...field} />
+                  <Input type="text" className="shad-input text-dark-1" {...field} />
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -132,9 +133,9 @@ const { mutateAsync: signInAccount, isPending: isSigningInUser } = useSignInAcco
             name="password"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Password</FormLabel>
+                <FormLabel className="shad-form_label">Password</FormLabel>
                 <FormControl>
-                  <Input type="password" className="shad-input" {...field} />
+                  <Input type="password" className="shad-input text-dark-1" {...field} />
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -151,7 +152,7 @@ const { mutateAsync: signInAccount, isPending: isSigningInUser } = useSignInAcco
             )}
           </Button>
 
-          <p className="text-small-regular text-light-2 text-center mt-2">
+          <p className="text-small-regular text-dark-2 text-center mt-2">
             Already have an account?
             <Link
               to="/sign-in"

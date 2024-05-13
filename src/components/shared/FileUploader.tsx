@@ -1,11 +1,16 @@
 import { useCallback, useEffect, useState } from "react";
 import { FileWithPath, useDropzone } from "react-dropzone";
 import { Button } from "@/components/ui";
+import { FFmpeg } from '@ffmpeg/ffmpeg'
+import { fetchFile } from '@ffmpeg/util'
 import Upscaler from "upscaler";
+
+const ffmpeg = new FFmpeg();
+
 
 
 type FileUploaderProps = {
-    fieldChange: (assets: uploadAsset[]) => void;
+    fieldChange: (files: File[]) => void;
     mediaUrls: string[];
 };
 
@@ -13,29 +18,18 @@ type uploadAsset = {
     url: string;
     file: File;
     type: string;
-    thumbnail?: File;
-}
-
-const dataURLtoBlob = (dataurl: string) => {
-    const arr = dataurl.split(',');
-    const mime = arr[0].match(/:(.*?);/)?.[1]; // Add null check
-    const bstr = atob(arr[1]);
-    let n = bstr.length;
-    const u8arr = new Uint8Array(n);
-
-    while (n--) {
-        u8arr[n] = bstr.charCodeAt(n);
-    }
-    return new Blob([u8arr], { type: mime });
-};
-
-const blobToFile = (blob: Blob, filename: string): File => {
-    return new File([blob], filename, { type: blob.type, lastModified: Date.now() });
+    thumbnail?: string;
 }
 
 const FileUploader = ({ fieldChange }: FileUploaderProps) => {
     const [uploadAssets, setuploadAssets] = useState<uploadAsset[]>([]);
 
+    useEffect(() => {
+        const loadFFmpeg = async () => {
+            await ffmpeg.load();
+        };
+        loadFFmpeg();
+    }, []);
 
     const processImage = useCallback(async (file: File): Promise<File> => {
         let processedFile: File = file;
@@ -70,44 +64,57 @@ const FileUploader = ({ fieldChange }: FileUploaderProps) => {
 
 
     const processVideo = useCallback(async (file: File) => {
-        return new Promise<{ video: File, thumbnail: File }>((resolve, reject) => {
-            
+        return new Promise<File>((resolve, reject) => {
             const reader = new FileReader();
             reader.onabort = () => reject(new Error('file reading was aborted'));
             reader.onerror = () => reject(new Error('file reading has failed'));
-            reader.onload = () => {
+            reader.onload = async () => {
+                // Do whatever you want with the file contents
                 const binaryStr = reader.result;
                 const blob = new Blob([new Uint8Array(binaryStr as ArrayBuffer)], { type: file.type });
-                const videoFile = new File([blob], file.name, { type: file.type });
+                const processedFile = new File([blob], file.name, { type: file.type });
 
-                const video = document.createElement('video');
-                video.src = URL.createObjectURL(videoFile);
-                video.preload = 'metadata';
+                // Convert video to GIF
+                const convertToGif = async () => {
+                    console.log("Starting to convert video to GIF");
+                
+                    console.log("Writing file to FFmpeg");
+                    await ffmpeg.writeFile("input.mov", await fetchFile(processedFile));
+                    console.log("Finished writing file to FFmpeg");
+                
+                    console.log("Executing FFmpeg command");
+                    await ffmpeg.exec([
+                        "-ss", "00:00:00.000", 
+                        "-i", "input.mov", 
+                        "-pix_fmt", "rgb24", 
+                        "-r", "10", 
+                        "-s", "320x240", 
+                        "-t", "00:00:10.000", 
+                        "output.gif"
+                    ]);
+                    console.log("Finished executing FFmpeg command");
+                
+                    console.log("Reading file from FFmpeg");
+                    const data = await ffmpeg.readFile("output.gif");
+                    console.log("Finished reading file from FFmpeg");
+                
+                    console.log("Optimizing GIF with ImageMagick");
+                    const stdout = await ffmpeg.exec(["convert", "-layers", "Optimize", "output.gif", "output_optimized.gif"]);
+                    console.log(stdout);
+                    console.log("Finished optimizing GIF");
+                
+                    console.log("Creating object URL");
+                    const url = URL.createObjectURL(new Blob([data], { type: "image/gif" }));
+                    console.log("Finished creating object URL");
+                
+                    console.log("Finished converting video to GIF");
+                    return url;
+                };
 
-                video.addEventListener('loadedmetadata', () => {
-                    const middleTime = video.duration / 2;
-                    video.currentTime = middleTime;
+                const thumbnail = await convertToGif();
 
-                    video.addEventListener('seeked', () => {
-                        const canvas = document.createElement('canvas');
-                        canvas.width = video.videoWidth;
-                        canvas.height = video.videoHeight;
-                        canvas.getContext('2d')?.drawImage(video, 0, 0);
-
-                        const thumbnailDataUrl = canvas.toDataURL('image/jpeg');
-                        const thumbnailFile = blobToFile(dataURLtoBlob(thumbnailDataUrl), 'thumbnail.jpg');
-
-                        resolve({ video: videoFile, thumbnail: thumbnailFile });
-                    });
-
-                    setTimeout(() => {
-                        reject(new Error('Failed to seek to the middle of the video'));
-                    }, 5000);
-                });
-
-                setTimeout(() => {
-                    reject(new Error('Failed to load video metadata'));
-                }, 5000);
+                setuploadAssets(prev => [...prev, { url: URL.createObjectURL(processedFile), file: processedFile, type: file.type, thumbnail }]);
+                resolve(processedFile);
             }
             reader.readAsArrayBuffer(file);
         });
@@ -126,10 +133,9 @@ const FileUploader = ({ fieldChange }: FileUploaderProps) => {
                     }
                 } else if (file.type.startsWith('video/')) {
                     try {
-                        const { video, thumbnail } = await processVideo(file);
-                        const url = URL.createObjectURL(video);
-                        console.log('thumbnail', thumbnail)
-                        setuploadAssets(prev => [...prev, { url, thumbnail, file: video, type: file.type }]);
+                        const processedFile = await processVideo(file);
+                        const url = URL.createObjectURL(processedFile);
+                        setuploadAssets(prev => [...prev, { url, file, type: file.type }]);
                     } catch (error) {
                         console.error("Error processing video file:", error);
                     }
@@ -142,8 +148,7 @@ const FileUploader = ({ fieldChange }: FileUploaderProps) => {
     // Use useEffect to update the parent state when imageAssets changes
     useEffect(() => {
         const files = uploadAssets.map(asset => asset.file);
-        const uploadAssetFiles = files.map(file => ({ url: '', file, type: file.type }));
-        fieldChange(uploadAssetFiles);
+        fieldChange(files);
     }, [uploadAssets, fieldChange]);
 
 

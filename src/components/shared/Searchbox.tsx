@@ -1,3 +1,4 @@
+import { Search } from 'lucide-react';
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 
@@ -8,10 +9,7 @@ const Searchbox = () => {
   return (
     <div className="px-8 sm:px-10 md:px-20 lg:px-80 flex gap-2 w-full mt-5 pb-7 scroll-transition-fade">
       <div className="flex justify-start items-center w-full px-2 rounded-xl bg-light-1 border border-2 border-black focus-within:shadow-sm">
-        <img src="/assets/icons/search.svg"
-          alt="search"
-          className="ml-1"
-        />
+        <Search className="ml-1"/>
         <input
           type="text"
           onChange={(e) => setSerchValue(e.target.value)}

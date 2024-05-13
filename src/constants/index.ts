@@ -24,20 +24,6 @@ export const adminSections = [
   }
 ]
 
-export const profileLinks = [
-  {
-    label: 'profile',
-    route: '/profile',
-    imgURL: '/assets/icons/user.svg'
-  },
-  {
-    label: 'logout',
-    route: '/sign-in',
-    imgURL: '/assets/icons/logout.svg'
-  },
-]
-
-
 export const categories = [
   {
     name: 'mondain',

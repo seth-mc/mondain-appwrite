@@ -10,8 +10,9 @@ import Loader from "@/components/shared/Loader";
 import { SigninValidation } from "@/lib/validation";
 import { useSignInAccount } from "@/lib/react-query/queries";
 import { useUserContext } from "@/context/AuthContext";
+import { DarkModeProps } from "@/types";
 
-const SigninForm = () => {
+const SigninForm = ({ darkMode }: DarkModeProps) => {
   const { toast } = useToast();
   const navigate = useNavigate();
   const { checkAuthUser, isLoading: isUserLoading } = useUserContext();
@@ -57,7 +58,7 @@ const SigninForm = () => {
   return (
     <Form {...form}>
       <div className="sm:w-420 flex-center flex-col">
-        <img className="w-52" src="/assets/images/logo-black.svg" alt="logo" />
+        <img className={`d cursor-pointer w-52 ${darkMode ? 'invert' : ''}`} src="/assets/images/logo-black.svg" alt="logo" />
 
         <h2 className="h3-bold md:h2-bold pt-5 sm:pt-12">
           Log in to your account
@@ -73,9 +74,9 @@ const SigninForm = () => {
             name="email"
             render={({ field }) => (
               <FormItem>
-                <FormLabel >Email</FormLabel>
+                <FormLabel className="shad-form_label">Email</FormLabel>
                 <FormControl>
-                  <Input type="text" className="shad-input" {...field} />
+                  <Input type="text" className="shad-input text-dark-1" {...field} />
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -87,9 +88,9 @@ const SigninForm = () => {
             name="password"
             render={({ field }) => (
               <FormItem>
-                <FormLabel >Password</FormLabel>
+                <FormLabel className="shad-form_label">Password</FormLabel>
                 <FormControl>
-                  <Input type="password" className="shad-input" {...field} />
+                  <Input type="password" className="shad-input text-dark-1" {...field} />
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -106,11 +107,11 @@ const SigninForm = () => {
             )}
           </Button>
 
-          <p className="text-small-regular text-light-2 text-center mt-2">
+          <p className="text-small-regular text-dark-1 text-center mt-2">
             Don&apos;t have an account?
             <Link
               to="/sign-up"
-              className="text-primary-500 text-small-semibold ml-1">
+              className="border-text-primary-500 text-small-semibold ml-1">
               Sign up
             </Link>
           </p>

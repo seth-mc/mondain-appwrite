@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { Routes, Route } from 'react-router-dom';
 import './globals.css'
 import AuthLayout from './_auth/AuthLayout';
@@ -11,7 +11,16 @@ import { Toaster } from './components/ui/toaster';
 
 
 const App = () => {
-  const [darkMode, setDarkMode] = useState(false);
+  const [darkMode, setDarkMode] = useState(() => {
+    const saved = localStorage.getItem('darkMode');
+    return saved !== null ? JSON.parse(saved) : false;
+  });
+
+  // Save darkMode to localStorage whenever it changes
+  useEffect(() => {
+    localStorage.setItem('darkMode', JSON.stringify(darkMode));
+  }, [darkMode]);
+
 
   const toggleDarkMode = () => {
     setDarkMode(!darkMode);
@@ -28,8 +37,8 @@ const App = () => {
       <Routes>
         {/* public routes */}
         <Route element={<AuthLayout />}>
-          <Route path="/sign-in" element={<SigninForm />} />
-          <Route path="/sign-up" element={<SignupForm />} />
+          <Route path="/sign-in" element={<SigninForm darkMode={darkMode} />} />
+          <Route path="/sign-up" element={<SignupForm darkMode={darkMode}/>} />
         </Route>
         <Route element={<RootLayout isAdmin={isAdmin} darkMode={darkMode} toggleDarkMode={toggleDarkMode} />}>
           <Route index element={<Home darkMode={darkMode} toggleDarkMode={toggleDarkMode} />} />

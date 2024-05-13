@@ -170,7 +170,7 @@ const PostForm = ({ post, action }: PostFormProps) => {
           name="category"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Category</FormLabel>
+              <FormLabel className="shad-form_label">Category</FormLabel>
               <Select onValueChange={field.onChange} defaultValue={field.value}>
                 <FormControl>
                   <SelectTrigger>
@@ -192,13 +192,13 @@ const PostForm = ({ post, action }: PostFormProps) => {
         <div className="flex gap-4 items-center justify-end">
           <Button
             type="button"
-            className="shad-button_dark_4"
+            className="shad-button_primary"
             onClick={() => navigate(-1)}>
             Cancel
           </Button>
           <Button
             type="submit"
-            className="shad-button_primary whitespace-nowrap"
+            className="shad-button_dark_4 whitespace-nowrap"
             disabled={isPendingCreate || isPendingUpdate}>
             {(isPendingCreate || isPendingUpdate) && <Loader />}
             {action} Post

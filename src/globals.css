@@ -43,7 +43,7 @@ html {
     --light-1: #000000;
     --light-2: #09090A;
     --light-3: #DBDBDB;
-    --light-4: #1F1F22;
+    --light-4: #bababa;
   }
 
   
@@ -300,20 +300,20 @@ html {
   }
 
   .shad-input {
-    @apply h-12 bg-light-2 border-none placeholder:text-light-4 focus-visible:ring-1 focus-visible:ring-offset-1 ring-offset-light-3 !important;
+    @apply h-12 border-dark-1 bg-light-2 placeholder:text-light-4 focus-visible:ring-1 focus-visible:ring-offset-1 ring-offset-light-3 !important;
   }
 
   .shad-textarea {
-    @apply h-36 bg-light-2 rounded-xl border-none focus-visible:ring-1 focus-visible:ring-offset-1 ring-offset-light-3 !important;
+    @apply h-36 bg-light-2 rounded-xl border-dark-1 focus-visible:ring-1 focus-visible:ring-offset-1 ring-offset-light-3 !important;
   }
 
   /* Button */
   .shad-button_primary {
-    @apply bg-light-2 hover:bg-primary-500 hover:text-light-1 !important;
+    @apply h-12 bg-light-3 text-light-1 hover:bg-primary-500 hover:text-light-1 !important;
   }
 
   .shad-button_dark_4 {
-    @apply h-12 bg-dark-4 px-5 text-light-1 flex gap-2 !important;
+    @apply h-12 bg-dark-4 px-5 text-light-1 flex gap-2 hover:text-light-1 hover:bg-primary-500 !important;
   }
 
   .shad-button_ghost {
@@ -363,30 +363,9 @@ align-items: center;
 height: 1rem;
 width: 1rem;
 position: relative;
-background-size: contain;
-background-repeat: no-repeat;
-background-position: 50%;
 transition: opacity .4s ease,transform .4s ease;
 }
 
-.player-button .player__button__play {
-background-image: url('data:image/svg+xml;charset=utf-8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 22 28"><path fill="%23000" d="M0 0v28l22-14L0 0z"/></svg>');
-}
-
-.player-button .player__button__pause {
-background-image: url('data:image/svg+xml;charset=utf-8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 22 28"><path fill="%23000" d="M.5 0h7v28h-7zM14.5 0h7v28h-7z"/></svg>');
-}
-
-.ff {
-width: 1.5rem;
-height: 1.5rem;
-max-width: fit-content;
-}
-
-.ff-button {
-margin-left: 1rem;
-margin-top: 0.4rem;
-}
 
 .player-button:active {
 opacity: 50%;
@@ -398,7 +377,6 @@ transform: scale(0.25);
 }
 
 .player__button__play {
-  background: url('data:image/svg+xml;charset=utf-8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 22 28"><path fill="%23000" d="M0 0v28l22-14L0 0z"/></svg>') no-repeat 50%/contain;
   transition: opacity .4s ease,transform .4s ease;
   width: 1rem;
   position: absolute;
@@ -406,7 +384,6 @@ transform: scale(0.25);
 }
 
 .player__button__pause {
-  background: url('data:image/svg+xml;charset=utf-8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 22 28"><path fill="%23000" d="M.5 0h7v28h-7zM14.5 0h7v28h-7z"/></svg>') no-repeat 50%/contain;
   transition: opacity .4s ease,transform .4s ease;
   width: 1rem;
   position: absolute;

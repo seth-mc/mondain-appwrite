@@ -6,6 +6,7 @@ import { useGetPosts, useSearchPosts } from "@/lib/react-query/queries";
 import { categories } from "@/constants";
 import { PostsQueryResult } from "@/types";
 import { DarkModeProps } from "@/types";
+import { Search } from "lucide-react";
 
 
 
@@ -66,11 +67,8 @@ const Home = ({ darkMode }: DarkModeProps) => {
       { newToSite ? (
          <div></div> ) : (
       <div className="px-8 sm:px-10 md:px-20 lg:px-80 flex gap-2 w-full mt-5 pb-7 scroll-transition-fade">
-        <div className="flex justify-start items-center w-full px-2 rounded-xl bg-light-1 border border-2 border-dark-1 focus-within:shadow-sm">
-          <img src="/assets/icons/search.svg"
-            alt="search"
-            className="ml-1"
-          />
+        <div className="text-dark-1 flex justify-start items-center w-full px-2 rounded-xl bg-light-1 border-2 border-dark-1 focus-within:shadow-sm">
+          <Search className="ml-1"/>
           <input
             type="text"
             onChange={(e) => {

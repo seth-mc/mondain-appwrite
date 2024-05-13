@@ -6,5 +6,6 @@ export { default as Post } from "./Post";
 export { default as SearchResults } from "./SearchResults";
 export { default as Searchbox } from "./Searchbox";
 export { default as MasonryLayout } from "./MasonryLayout";
+export { default as ThemeProvider } from './ThemeProvider';
 export { asciiFrame as CubeLoader } from './CubeLoader';
 export { default as PlayerComponent } from './Player';

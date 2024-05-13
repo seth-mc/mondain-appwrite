@@ -1,4 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
+import { Play, Pause, FastForward, Music } from 'lucide-react';
 import React from 'react';
 
 declare global {
@@ -60,8 +61,8 @@ export default class PlayerComponent extends React.Component<object, State> {
 
 
         script.onload = () => {
-             // Restore console.error
-        console.error = originalConsoleError;
+            // Restore console.error
+            console.error = originalConsoleError;
 
             const iframeElement = document.querySelector("iframe.sc-widget");
             if (!iframeElement) {
@@ -185,14 +186,14 @@ export default class PlayerComponent extends React.Component<object, State> {
             <div id="mySidenav" ref={this.wrapperRef} style={{ "width": this.state.playerwidth }} className="sidenav">
                 <div id="playermenu" style={{ "right": this.state.playerwidth }} onClick={this.setSidenavButton.bind(this)}>
                     <div className="drag-header">
-                        <img className="musical-note" src="/assets/icons/musical-notes.svg" alt="musical-notes" />
+                        <Music />
                     </div>
                 </div>
                 <div className="player-container">
                     <div className="player">
                         <div className="player-info">
                             <div className="player-title-outer">
-                                <div className={`player-title ${this.state.playertitle.length > 15 ? 'player-title-marquee' : ''}`}>
+                                <div className={`player-title ${this.state.playertitle ? (this.state.playertitle.length > 15 ? 'player-title-marquee' : '') : ''}`}>
                                     {this.state.playertitle}
                                 </div>
                             </div>
@@ -200,12 +201,12 @@ export default class PlayerComponent extends React.Component<object, State> {
                                 <div className="current">{this.state.time}</div>
                                 <div className="duration">{this.state.duration}</div>
                             </div>
-                            <div className="player-controls">
-                                <button className="player-button" onClick={this.setPlayButton.bind(this)}>
-                                    <div className={this.state.playButtonState}></div>
+                            <div className="player-controls mt-2">
+                                <button className="!text-dark-1 player-button" onClick={this.setPlayButton.bind(this)}>
+                                    {this.state.playButtonState === "player__button__play" ? <Play /> : <Pause />}
                                 </button>
-                                <button className="player-button ff-button" onClick={this.nextSong}>
-                                    <img className="ff" src="/assets/icons/fast-forward.svg" alt="ff" />
+                                <button className="!text-dark-1 player-button ml-5" onClick={this.nextSong}>
+                                    <FastForward size={24} className="max-w-fit" />
                                 </button>
                             </div>
                         </div>

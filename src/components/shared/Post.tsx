@@ -2,6 +2,7 @@ import { multiFormatDateString } from '@/lib/utils';
 import { Models } from 'appwrite';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
+import { Layers3 } from 'lucide-react';
 
 type PostProps = {
     post: Models.Document;
@@ -33,8 +34,8 @@ const Post = ({ post, newToSite }: PostProps) => {
           )}
   
           <div className="absolute top-0 left-0 mt-2 mr-2 flex justify-end">
-            <div className="d lg:w-10 lg:h-10 md:w-12 md:h-12 sm:w-15 sm:h-15  w-12 h-12 p-2 flex items-center justify-center text-dark text-xl outline-none">
-              {imageUrls.length > 1 && <img src="/assets/icons/square-stack.svg"  className="d fill-white"/>}
+            <div className="d lg:w-10 lg:h-10 md:w-12 md:h-12 sm:w-15 sm:h-15  w-12 h-12 p-2 flex items-center justify-center text-light-1 text-xl outline-none">
+              {imageUrls.length > 1 && <Layers3 />}
             </div>
           </div>
         </div>

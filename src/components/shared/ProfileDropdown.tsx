@@ -1,9 +1,10 @@
-import { useState } from 'react';
+import { MouseEvent, useEffect, useRef, useState } from 'react';
 import { useSignOutAccount } from "@/lib/react-query/queries";
 import { Link, useNavigate } from 'react-router-dom'
 import { useUserContext, INITIAL_USER } from "@/context/AuthContext";
 import { Loader } from '@/components/shared';
 import { motion, Variants } from "framer-motion";
+import { CirclePlus, LogOut, Moon, Settings, Sun, User } from 'lucide-react';
 
 const itemVariants: Variants = {
   open: {
@@ -16,13 +17,14 @@ const itemVariants: Variants = {
 
 export function ProfileDropdown({ isAdmin, darkMode, toggleDarkMode }: { isAdmin?: boolean, darkMode: boolean, toggleDarkMode: () => void }) {
   const navigate = useNavigate();
+  const dropdownRef = useRef(null);
   const { user, setUser, setIsAuthenticated, isLoading } = useUserContext();
   const { mutate: signOut } = useSignOutAccount();
   const [isOpen, setIsOpen] = useState(false);
 
 
   const handleSignOut = async (
-    e: React.MouseEvent<HTMLButtonElement, MouseEvent>
+    e: MouseEvent
   ) => {
     e.preventDefault();
     signOut();
@@ -30,6 +32,20 @@ export function ProfileDropdown({ isAdmin, darkMode, toggleDarkMode }: { isAdmin
     setUser(prevUser => ({ ...prevUser, ...INITIAL_USER }));
     navigate("/sign-in");
   };
+
+  useEffect(() => {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    function handleClickOutside(event: any) {
+      if (dropdownRef.current && !((dropdownRef.current as unknown) as HTMLElement).contains(event.target)) {
+        setIsOpen(false);
+      }
+    }
+
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, []);
 
 
   return (
@@ -40,6 +56,7 @@ export function ProfileDropdown({ isAdmin, darkMode, toggleDarkMode }: { isAdmin
         </div>
       ) : (
         <motion.nav
+          ref={dropdownRef}
           initial={false}
           animate={isOpen ? "open" : "closed"}
         >
@@ -50,7 +67,7 @@ export function ProfileDropdown({ isAdmin, darkMode, toggleDarkMode }: { isAdmin
             <img src={user?.email ? user.imageUrl : "/assets/icons/profile-placeholder.svg"} alt="profile" className="d w-32 h-25 rounded-full border border-1 border-dark-1" />
           </motion.button>
           <motion.ul
-            className="absolute right-0 top-0 mt-20 mr-2 rounded-lg bg-light-1  border-dark-1 shadow-lg overflow-hidden"
+            className="absolute d !z-20 right-0 top-0 mt-20 mr-2 rounded-lg bg-light-1  border-dark-1 shadow-lg overflow-hidden"
             variants={{
               open: {
                 clipPath: "inset(0% 0% 0% 0% round 10px)",
@@ -74,35 +91,35 @@ export function ProfileDropdown({ isAdmin, darkMode, toggleDarkMode }: { isAdmin
             style={{ pointerEvents: isOpen ? "auto" : "none" }}
           >
             {user?.email ? (
-            <Link to={`/profile/${user.id}`}>
-              <motion.li variants={itemVariants}
-                className="flex items-center p-2 px-8 text-dark-1 hover:text-light-3 hover:bg-gray-100"
-              >
-                <img className="mr-2 h-4 w-4" src="/assets/icons/user.svg" alt="user" />
-                <span>Profile</span>
-              </motion.li>
-            </Link>
+              <Link to={`/profile/${user.id}`}>
+                <motion.li variants={itemVariants}
+                  className="flex items-center p-2 px-8 text-dark-1 hover:text-light-3 hover:bg-gray-100"
+                >
+                  <User className="mr-2" size={16} />
+                  <span>Profile</span>
+                </motion.li>
+              </Link>
             ) : (
               <Link to={`/sign-up`}>
-              <motion.li variants={itemVariants}
-                className="flex items-center p-2 px-8 text-dark-1 hover:text-light-3 hover:bg-gray-100"
-              >
-                <img className="mr-2 h-4 w-4" src="/assets/icons/user.svg" alt="user" />
-                <span>Sign Up</span>
-              </motion.li>
-            </Link>
+                <motion.li variants={itemVariants}
+                  className="flex items-center p-2 px-8 text-dark-1 hover:text-light-3 hover:bg-gray-100"
+                >
+                  <User className="mr-2" size={16} />
+                  <span>Sign Up</span>
+                </motion.li>
+              </Link>
 
             )}
             <motion.li variants={itemVariants} onClick={toggleDarkMode} className="flex text-dark-1 hover:text-light-3 items-center p-2 px-8 hover:bg-gray-100">
 
               {darkMode ? (
                 <>
-                  <img className="mr-2 h-4 w-4" src="/assets/icons/sun.svg" alt="sun" />
+                  <Sun className="mr-2" size={16} />
                   <span>Light Mode</span>
                 </>
               ) : (
                 <>
-                  <img className="mr-2 h-4 w-4" src="/assets/icons/moon.svg" alt="sun" />
+                  <Moon className="mr-2" size={16} />
                   <span>Dark Mode</span>
                 </>
               )}
@@ -115,7 +132,7 @@ export function ProfileDropdown({ isAdmin, darkMode, toggleDarkMode }: { isAdmin
                   <motion.li variants={itemVariants}
                     className="flex items-center p-2 px-8 text-dark-1 hover:text-light-3 hover:bg-gray-100"
                   >
-                    <img className="mr-2 h-4 w-4" src="/assets/icons/settings.svg" alt="user" />
+                    <Settings className="mr-2" size={16} />
                     <span>Settings</span>
                   </motion.li>
                 </Link>
@@ -123,7 +140,7 @@ export function ProfileDropdown({ isAdmin, darkMode, toggleDarkMode }: { isAdmin
                   <motion.li variants={itemVariants}
                     className="flex items-center p-2 px-8 text-dark-1 hover:text-light-3 hover:bg-gray-100"
                   >
-                    <img className="mr-2 h-4 w-4" src="/assets/icons/create-post.svg" alt="user" />
+                    <CirclePlus className="mr-2" size={16} />
                     <span>Create Post</span>
                   </motion.li>
                 </Link>
@@ -131,10 +148,15 @@ export function ProfileDropdown({ isAdmin, darkMode, toggleDarkMode }: { isAdmin
             ) : (
               <div></div>
             )}
-            <motion.button variants={itemVariants} onClick={(e) => handleSignOut(e)} className="flex text-dark-1 hover:text-light-3 items-center p-2 px-8 hover:bg-gray-100">
-              <img className="mr-2 h-4 w-4" src="/assets/icons/logout.svg" alt="logout" />
-              <span>Log out</span>
-            </motion.button>
+            {user?.email ? (
+              <motion.li variants={itemVariants} onClick={(e: MouseEvent) => handleSignOut(e)} className="flex text-dark-1 hover:text-light-3 items-center p-2 px-8 hover:bg-gray-100">
+                <LogOut className="mr-2" size={16} />
+                <span>Log out</span>
+              </motion.li>
+            ) : (
+              <div>
+              </div>
+            )}
 
           </motion.ul>
         </motion.nav>
