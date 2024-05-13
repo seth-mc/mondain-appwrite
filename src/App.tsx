@@ -39,10 +39,11 @@ const App = () => {
         <Route element={<AuthLayout />}>
           <Route path="/sign-in" element={<SigninForm darkMode={darkMode} />} />
           <Route path="/sign-up" element={<SignupForm darkMode={darkMode}/>} />
+          <Route path="/dj" element={<Dj />} />
         </Route>
         <Route element={<RootLayout isAdmin={isAdmin} darkMode={darkMode} toggleDarkMode={toggleDarkMode} />}>
           <Route index element={<Home darkMode={darkMode} toggleDarkMode={toggleDarkMode} />} />
-          <Route path="/dj" element={<Dj />} />
+          
 
           {/* private routes */}
           {isAdmin && (
