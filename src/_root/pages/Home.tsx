@@ -7,7 +7,7 @@ import { categories } from "@/constants";
 import { PostsQueryResult } from "@/types";
 import { DarkModeProps } from "@/types";
 import { Search } from "lucide-react";
-
+import { useUserContext } from "@/context/AuthContext";
 
 
 const Home = ({ darkMode }: DarkModeProps) => {
@@ -19,9 +19,9 @@ const Home = ({ darkMode }: DarkModeProps) => {
   const [searchValue, setSearchValue] = useState("");
   const debouncedSearch = useDebounce(searchValue, 500);
   const { data: searchedPosts, isFetching: isSearchFetching } = useSearchPosts(debouncedSearch, activeCategory);
-  const cookieFallback = localStorage.getItem("cookieFallback");
-  const newToSite = cookieFallback === "[]" || cookieFallback === null || cookieFallback === undefined;
 
+  const { isAuthenticated } = useUserContext();
+    const newToSite = !isAuthenticated;
 
 
   const resetSearch = () => {

@@ -4,6 +4,7 @@ import { Button } from "@/components/ui";
 import { FFmpeg } from '@ffmpeg/ffmpeg'
 import { fetchFile } from '@ffmpeg/util'
 import Upscaler from "upscaler";
+import { CloudUpload, Trash2 } from "lucide-react";
 
 const ffmpeg = new FFmpeg();
 
@@ -195,18 +196,13 @@ const FileUploader = ({ fieldChange }: FileUploaderProps) => {
                                         URL.revokeObjectURL(asset.url); // Revoke the object URL to free memory
                                     }}
                                 >
-                                    <img src="/assets/icons/delete.svg" alt="delete" />
+                                    <Trash2 />
                                 </button>
                             </div>
                         ))
                     ) : (
                         <div className="file_uploader-box ">
-                            <img
-                                src="/assets/icons/file-upload.svg"
-                                width={96}
-                                height={77}
-                                alt="file upload"
-                            />
+                            <CloudUpload size={77}/>
 
                             <h3 className="base-medium text-light-2 mb-2 mt-6">
                                 Drag photo or video here
