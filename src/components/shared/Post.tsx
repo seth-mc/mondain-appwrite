@@ -2,7 +2,6 @@ import { multiFormatDateString } from '@/lib/utils';
 import { Models } from 'appwrite';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { Layers3 } from 'lucide-react';
 import { Icon } from 'lucide-react';
 import SquareStack from './squareStack';
 
