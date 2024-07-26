@@ -1,7 +1,7 @@
 "use client";
 
 import axios, { AxiosProgressEvent, CancelTokenSource } from "axios";
-import { useCallback, useEffect, useState } from "react";
+import { Ref, useCallback, useEffect, useState } from "react";
 import { useDropzone } from "../dropzone/react";
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -40,7 +40,6 @@ const DropzoneComponent: React.FC<DropzoneComponentProps> = ({
   acceptedFileTypes,
   filesToUpload,
   setFilesToUpload,
-  uploadUrls,
   setUploadUrls,
   onUploadComplete,
   errorMessage,
@@ -145,7 +144,7 @@ const DropzoneComponent: React.FC<DropzoneComponentProps> = ({
       }
       setErrorMessage("");
     },
-    [filesToUpload, maxTotalFiles, onUploadProgress, setFilesToUpload, setPermanentUrls, setErrorMessage, dirInBucket]
+    [setErrorMessage, maxTotalFiles, filesToUpload.length, dirInBucket, setUploadUrls, setFilesToUpload, onUploadProgress]
   );
 
   const { getRootProps, getInputProps } = useDropzone({
@@ -153,6 +152,9 @@ const DropzoneComponent: React.FC<DropzoneComponentProps> = ({
     accept: acceptedFileTypes,
     maxSize: maxSize,
   });
+
+  const inputProps = getInputProps() as React.InputHTMLAttributes<HTMLInputElement> & { ref: Ref<HTMLInputElement> };
+
 
   return (
     <div className="max-w-lg mx-auto mt-8">
@@ -162,7 +164,7 @@ const DropzoneComponent: React.FC<DropzoneComponentProps> = ({
         <p className="text-base md:text-lg font-semibold text-gray-800">Drag & Drop Files Here</p>
         <p className="text-xs md:text-sm text-gray-600">or click to browse</p>
       </div>
-      <Input {...getInputProps()} className="hidden" />
+      <Input {...inputProps} className="hidden" />
       {errorMessage && <div className="mt-2 md:mt-4 text-xs md:text-sm text-red-600">{errorMessage}</div>}
       {filesToUpload.length > 0 && (
         <div className="mt-4 w-full">

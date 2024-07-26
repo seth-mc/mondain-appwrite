@@ -164,7 +164,7 @@ const Dj = () => {
     <div>
        {loading ? (
         <div className="loading">
-        <div className="container">
+        <div className="container d">
           <pre className="cube">{cube}</pre>
         </div>
       </div>

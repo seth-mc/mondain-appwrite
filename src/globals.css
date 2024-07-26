@@ -627,8 +627,10 @@ code {
 }
 
 .container {
-height: 10em;
-position: relative
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 35em;
 }
 
 .cube {
