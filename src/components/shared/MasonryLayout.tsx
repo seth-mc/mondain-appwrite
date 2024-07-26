@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import Masonry from 'react-masonry-css';
 import { Post } from '@/components/shared';
 import { Models } from 'appwrite';
