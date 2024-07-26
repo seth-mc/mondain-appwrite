@@ -122,31 +122,10 @@ export async function signOutAccount() {
 // ============================== CREATE POST
 export async function createPost(post: INewPost) {
   try {
-    // Upload files to Appwrite storage
-    const uploadedFiles = await uploadFiles(post.file);
-
-    let thumbnailUrl = null;
-    if (post.thumbnail) {
-      const uploadedThumbnail = await uploadFiles([post.thumbnail]);
-      if (uploadedThumbnail.length > 0) {
-        thumbnailUrl = getFilePreview(uploadedThumbnail[0].$id);
-      }
-    }
-
-    if (uploadedFiles.length === 0) throw new Error("No files uploaded");
-
-    // Get file URLs
-    const fileUrls = uploadedFiles.map(file => getFilePreview(file.$id)).filter(url => url);
-    if (fileUrls.length === 0) {
-      uploadedFiles.forEach(file => deleteFile(file.$id));
-      throw new Error("Failed to get file URLs");
-    }
-
-
     // Convert tags into array
     const tags = post.tags?.replace(/ /g, "").split(",") || [];
 
-    // Create post with multiple image URLs
+    // Create post with image URLs
     const newPost = await databases.createDocument(
       appwriteConfig.databaseId,
       appwriteConfig.postCollectionId,
@@ -154,9 +133,7 @@ export async function createPost(post: INewPost) {
       {
         creator: post.userId,
         caption: post.caption,
-        imageUrls: fileUrls,
-        thumbnailUrl, // Save thumbnail URL
-        imageIds: uploadedFiles.map(file => file.$id),
+        imageUrls: post.imageUrls, // Assuming post.file now contains URLs
         location: post.location,
         tags,
         category: post.category
@@ -164,7 +141,6 @@ export async function createPost(post: INewPost) {
     );
 
     if (!newPost) {
-      uploadedFiles.forEach(file => deleteFile(file.$id));
       throw new Error("Failed to create new post");
     }
 
@@ -301,7 +277,7 @@ export async function getInfinitePosts({ pageParam = 0 }: { pageParam?: any }): 
 
 // ============================== GET POST BY ID
 export async function getPostById(postId?: string) {
-  if (!postId) throw Error;
+  if (!postId) throw Error("Post ID is required");
 
   try {
     const post = await databases.getDocument(
@@ -310,72 +286,42 @@ export async function getPostById(postId?: string) {
       postId
     );
 
-    if (!post) throw Error;
+    if (!post) throw Error("Post not found");
 
     return post;
   } catch (error) {
     console.log(error);
+    throw error;
   }
 }
 
 // ============================== UPDATE POST
 export async function updatePost(post: IUpdatePost) {
-  const hasFilesToUpdate = post.file.length > 0;
-
   try {
-    let images = {
-      imageUrls: post.imageUrls as URL[] || [],
-      imageIds: post.imageIds || [],
-    };
-
-    if (hasFilesToUpdate) {
-      // Upload new files to Appwrite storage
-      const uploadedFiles = await uploadFiles(post.file);
-      if (uploadedFiles.length === 0) throw Error;
-
-      // Get new file urls
-      const newFileUrls = uploadedFiles.map(file => new URL(getFilePreview(file.$id)));
-      if (newFileUrls.length === 0) {
-        uploadedFiles.forEach(file => deleteFile(file.$id));
-        throw Error;
-      }
-
-      images = {
-        imageUrls: [...images.imageUrls, ...newFileUrls],
-        imageIds: [...images.imageIds, ...uploadedFiles.map(file => file.$id)],
-      };
-    }
-
     // Convert tags into array
     const tags = post.tags?.replace(/ /g, "").split(",") || [];
 
-    // Update post with multiple image URLs
+    // Update post with image URLs
     const updatedPost = await databases.updateDocument(
       appwriteConfig.databaseId,
       appwriteConfig.postCollectionId,
       post.postId,
       {
         caption: post.caption,
-        imageUrls: images.imageUrls,
-        imageIds: images.imageIds,
+        imageUrls: post.file, // Assuming post.file now contains URLs
         location: post.location,
         tags: tags,
       }
     );
 
     if (!updatedPost) {
-      if (hasFilesToUpdate) {
-        images.imageIds.forEach(id => deleteFile(id));
-      }
-      throw Error;
+      throw Error("Failed to update post");
     }
-
-    // Optionally delete old files if necessary
-    // ...
 
     return updatedPost;
   } catch (error) {
     console.log(error);
+    throw error;
   }
 }
 

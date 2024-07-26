@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { useInView } from "react-intersection-observer";
 import useDebounce from "@/hooks/useDebounce";
-import { Loader, MasonryLayout, SearchResults } from "@/components/shared";
+import { CarouselPlugin, Loader, MasonryLayout, SearchResults } from "@/components/shared";
 import { useGetPosts, useSearchPosts } from "@/lib/react-query/queries";
 import { categories } from "@/constants";
 import { PostsQueryResult } from "@/types";
@@ -15,7 +15,7 @@ const Home = ({ darkMode }: DarkModeProps) => {
   // eslint-disable-next-line @typescript-eslint/ban-types
   const { data: posts, fetchNextPage, hasNextPage } = useGetPosts() as unknown as { data: PostsQueryResult, fetchNextPage: Function, hasNextPage: boolean };  
   const [allPosts, setAllPosts] = useState([]);
-  const [activeCategory, setActiveCategory] = useState('');
+  const [activeCategory, setActiveCategory] = useState('mondain');
   const [searchValue, setSearchValue] = useState("");
   const debouncedSearch = useDebounce(searchValue, 500);
   const { data: searchedPosts, isFetching: isSearchFetching } = useSearchPosts(debouncedSearch, activeCategory);
@@ -36,9 +36,9 @@ const Home = ({ darkMode }: DarkModeProps) => {
 
   useEffect(() => {
     if (posts?.pages) {
-      const newPosts = posts.pages.flatMap(page => page.documents) as never[];
-      console.log("newPosts", newPosts);
+      const newPosts = posts.pages.flatMap(page => page.documents) as never[];      
       setAllPosts(newPosts);
+      console.log('allPosts', allPosts);
     }
   }, [posts]);
 
@@ -83,6 +83,7 @@ const Home = ({ darkMode }: DarkModeProps) => {
         </div>
       </div>
       )}
+      <div className="hidden sm:flex lg:flex">
       <div className="lg:px-20 md:px-20 sm:px-0 px-5 flex flex-wrap justify-center gap-2">
         {categories.map(category => (
           <div key={category.name} className="flex items-center px-2 mb-2" onClick={() => {
@@ -100,6 +101,10 @@ const Home = ({ darkMode }: DarkModeProps) => {
           </div>
         ))}
 
+      </div>
+      </div>
+      <div className="lg:px-20 md:px-20 sm:px-0 px-5 flex flex-wrap justify-center gap-2 sm:hidden">
+        <CarouselPlugin activeCategory={activeCategory} categories={categories} setActiveCategory={setActiveCategory} setSearchValue={setSearchValue} />
       </div>
       <div className="flex-between w-full max-w-5xl mt-16 mb-7">
 

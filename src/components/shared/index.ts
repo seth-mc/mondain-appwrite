@@ -1,7 +1,6 @@
 export { default as Bottombar } from "./Bottombar";
 export { default as Loader } from "./Loader";
 export { default as Topbar } from "./Topbar";
-export { default as FileUploader } from "./FileUploader";
 export { default as Post } from "./Post";
 export { default as SearchResults } from "./SearchResults";
 export { default as Searchbox } from "./Searchbox";
@@ -9,3 +8,4 @@ export { default as MasonryLayout } from "./MasonryLayout";
 export { default as ThemeProvider } from './ThemeProvider';
 export { asciiFrame as CubeLoader } from './CubeLoader';
 export { default as PlayerComponent } from './Player';
+export { default as CarouselPlugin } from './CarouselPlugin';
