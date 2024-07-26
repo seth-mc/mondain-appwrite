@@ -26,7 +26,6 @@ import {
   searchPosts,
   savePost,
   deleteSavedPost,
-  createQueuedPost,
 } from "@/lib/appwrite/api";
 import { INewPost, INewUser, IUpdatePost, IUpdateUser, Page } from "@/types";
 
@@ -110,17 +109,6 @@ export const useCreatePost = () => {
   });
 };
 
-export const useCreateQueuedPost = () => {
-  const queryClient = useQueryClient();
-  return useMutation({
-    mutationFn: (post: INewPost) => createQueuedPost(post),
-    onSuccess: () => {
-      queryClient.invalidateQueries({
-        queryKey: [QUERY_KEYS.GET_RECENT_POSTS],
-      });
-    },
-  });
-};
 
 export const useGetPostById = (postId?: string) => {
   return useQuery({
