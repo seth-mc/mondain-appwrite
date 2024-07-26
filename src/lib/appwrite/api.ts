@@ -308,7 +308,7 @@ export async function updatePost(post: IUpdatePost) {
       post.postId,
       {
         caption: post.caption,
-        imageUrls: post.file, // Assuming post.file now contains URLs
+        imageUrls: post.imageUrls,
         location: post.location,
         tags: tags,
       }
@@ -439,53 +439,6 @@ export async function getRecentPosts() {
     console.log(error);
   }
 }
-
-// ============================== CREATE A QUEUED POST
-export async function createQueuedPost(post: INewPost) {
-  try {
-    // Upload files to Appwrite storage
-    const uploadedFiles = await uploadFiles(post.file);
-
-    if (uploadedFiles.length === 0) throw Error;
-
-    // Get file URLs
-    const fileUrls = uploadedFiles.map(file => getFilePreview(file.$id)).filter(url => url);
-
-    if (fileUrls.length === 0) {
-      uploadedFiles.forEach(file => deleteFile(file.$id));
-      throw Error;
-    }
-
-    // Convert tags into array
-    const tags = post.tags?.replace(/ /g, "").split(",") || [];
-
-    // Create post with multiple image URLs
-    const newPost = await databases.createDocument(
-      appwriteConfig.databaseId,
-      appwriteConfig.queuedPostsCollectionId,
-      ID.unique(),
-      {
-        creator: post.userId,
-        caption: post.caption,
-        imageUrls: fileUrls, // Storing multiple image URLs
-        imageIds: uploadedFiles.map(file => file.$id), // Storing IDs of all uploaded files
-        location: post.location,
-        tags: tags,
-        category: post.category
-      }
-    );
-
-    if (!newPost) {
-      uploadedFiles.forEach(file => deleteFile(file.$id));
-      throw Error;
-    }
-
-    return newPost;
-  } catch (error) {
-    console.log(error);
-  }
-}
-
 // ============================== FUNCTION TO MOVE POST FROM QUEUE TO MAIN POSTS COLLECTION
 /*export async function transferPostToMain(postId: string) {
   // Add logic to move the post
@@ -623,127 +576,5 @@ export async function searchPostsGraphql(searchTerm: string) {
   } catch (error) {
     console.error("GraphQL query error:", error);
     throw error;
-  }
-}
-
-
-
-// ============================================================
-// SPARKS
-// ============================================================
-
-// ============================== CREATE SPARK
-export async function createSpark(post: INewPost) {
-  try {
-    // Upload files to Appwrite storage
-    const uploadedFiles = await uploadFiles(post.file);
-
-    if (uploadedFiles.length === 0) throw Error;
-
-    // Get file URLs
-    const fileUrls = uploadedFiles.map(file => getFilePreview(file.$id)).filter(url => url);
-
-    if (fileUrls.length === 0) {
-      uploadedFiles.forEach(file => deleteFile(file.$id));
-      throw Error;
-    }
-
-    // Convert tags into array
-    const tags = post.tags?.replace(/ /g, "").split(",") || [];
-
-    // Create post with multiple image URLs
-    const newPost = await databases.createDocument(
-      appwriteConfig.databaseId,
-      appwriteConfig.postCollectionId,
-      ID.unique(),
-      {
-        creator: post.userId,
-        caption: post.caption,
-        imageUrls: fileUrls, // Storing multiple image URLs
-        imageIds: uploadedFiles.map(file => file.$id), // Storing IDs of all uploaded files
-        location: post.location,
-        tags: tags,
-        category: post.category
-      }
-    );
-
-    if (!newPost) {
-      uploadedFiles.forEach(file => deleteFile(file.$id));
-      throw Error;
-    }
-
-    return newPost;
-  } catch (error) {
-    console.log(error);
-  }
-}
-
-// ============================== SEARCH SPARKS
-export async function searchSparks(searchTerm: string, activeCategory?: string) {
-  try {
-    if (!searchTerm) {
-      if (activeCategory && activeCategory !== "") {
-        const posts = await databases.listDocuments(
-          appwriteConfig.databaseId,
-          appwriteConfig.postCollectionId,
-          [Query.search("category", activeCategory)]
-        );
-        return posts;
-      }
-    }
-
-    const posts = await databases.listDocuments(
-      appwriteConfig.databaseId,
-      appwriteConfig.postCollectionId,
-      [Query.search("caption", searchTerm)]
-    );
-
-    if (!posts) throw Error;
-
-    return posts;
-  } catch (error) {
-    console.log(error);
-  }
-}
-
-export async function getInfiniteSparks({ pageParam }: { pageParam: number }) {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const queries: any[] = [Query.orderDesc("$updatedAt"), Query.limit(9)];
-
-  if (pageParam) {
-    queries.push(Query.cursorAfter(pageParam.toString()));
-  }
-
-  try {
-    const posts = await databases.listDocuments(
-      appwriteConfig.databaseId,
-      appwriteConfig.postCollectionId,
-      queries
-    );
-
-    if (!posts) throw Error;
-
-    return posts;
-  } catch (error) {
-    console.log(error);
-  }
-}
-
-// ============================== GET POST BY ID
-export async function getSparkById(postId?: string) {
-  if (!postId) throw Error;
-
-  try {
-    const post = await databases.getDocument(
-      appwriteConfig.databaseId,
-      appwriteConfig.postCollectionId,
-      postId
-    );
-
-    if (!post) throw Error;
-
-    return post;
-  } catch (error) {
-    console.log(error);
   }
 }
