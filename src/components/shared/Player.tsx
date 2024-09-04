@@ -40,8 +40,8 @@ export default class PlayerComponent extends React.Component<object, State> {
             playerwidth: "0px",
             record: "record d",
             duration: "",
-            playlistimg: "https://i2o.scdn.co/image/ab67706c0000cfa3de2510c5c5d4b17e565efaca",
-            playlistlink: "https://open.spotify.com/playlist/5fm3smZtgJjATBcIN1fd2Q?si=32c3c0f241c446d0",
+            playlistimg: "https://i1.sndcdn.com/artworks-JH2uC966LI0mbntK-yaC4bw-t500x500.jpg",
+            playlistlink: "https://soundcloud.com/mondain-357657441/mondain-mix-01",
             isWidgetReady: false,
         };
         this.wrapperRef = React.createRef();

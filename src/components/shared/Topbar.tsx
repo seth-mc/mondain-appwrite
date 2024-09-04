@@ -36,7 +36,7 @@ const Topbar = ({ isAdmin, darkMode, toggleDarkMode }: DarkModeProps) => {
 
   return (
     <div className="!z-20 d flex justify-between w-full mt-5 pb-7 px-5">
-    <div className="bg-light-1 text-dark-1 flex items-center">
+    <div className="text-dark-1 flex items-center">
       {/* Hamburger Menu for small screens */}
       <div className="md:hidden">
       <motion.nav
@@ -51,7 +51,7 @@ const Topbar = ({ isAdmin, darkMode, toggleDarkMode }: DarkModeProps) => {
               <Menu size={36} className="p-2"/>
               </motion.button>
               <motion.ul
-            className="absolute !z-20 left-0 top-0 mt-20 ml-2 rounded-lg bg-light-1  border-dark-1 shadow-lg overflow-hidden"
+            className="absolute !z-20 left-0 top-0 mt-20 ml-2 rounded-lg border-dark-1 shadow-lg overflow-hidden"
         variants={{
           open: {
             clipPath: "inset(0% 0% 0% 0% round 10px)",
