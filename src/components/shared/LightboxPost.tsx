@@ -4,16 +4,20 @@ import { multiFormatDateString } from "@/lib/utils";
 import { ChevronLeft, ChevronRight, X } from "lucide-react";
 import { motion, AnimatePresence } from 'framer-motion';
 import { deletePost } from "@/lib/appwrite/api";
+import { useQueryClient } from "@tanstack/react-query";
+import { IUpdatePost } from '@/types';
 
 type LightboxPostProps = {
     postId: string | null;
     onClose: () => void;
     isAdmin: boolean;
+    newToSite: boolean;
 };
 
 const LightboxPost = ({ postId, onClose, isAdmin }: LightboxPostProps) => {
-    const { data: post, isLoading } = useGetPostById(postId);
+    const { data: post, isLoading } = useGetPostById(postId || undefined);
     const updatePost = useUpdatePost();
+    const queryClient = useQueryClient();
     const [currentImageIndex, setCurrentImageIndex] = useState(0);
     const [order, setOrder] = useState<number | null>(null);
     const [caption, setCaption] = useState('');
@@ -47,10 +51,15 @@ const LightboxPost = ({ postId, onClose, isAdmin }: LightboxPostProps) => {
 
     const handleDelete = async () => {
         console.log('Delete button clicked');
-        if (!postId) return;
+        if (!postId || !post) return;
         try {
-            await deletePost(postId);
+            // Assuming the first image in the array is the main image
+            const imageId = post.imageUrls[0].split('/').pop() || '';
+            await deletePost(postId, imageId);
             console.log('Post deleted successfully');
+            // Invalidate and refetch queries
+            await queryClient.invalidateQueries({ queryKey: ["posts"] });
+            await queryClient.invalidateQueries({ queryKey: ["infinitePosts"] });
             onClose();
         } catch (error) {
             console.error('Failed to delete post:', error);
@@ -59,18 +68,19 @@ const LightboxPost = ({ postId, onClose, isAdmin }: LightboxPostProps) => {
 
     const handleSave = async () => {
         if (!postId) return;
-
+    
         try {
-            const updatedPost = {
+            const updatedPost: IUpdatePost = {
                 postId,
                 caption,
                 location,
-                tags,
+                tags: tags.split(',').map(tag => tag.trim()),
                 imageUrls: post.imageUrls,
-                //content,
+                imageIds: post.imageIds || [], // Add this line
+                category: post.category || '', // Add this line
                 order: order || 0,
             };
-
+    
             await updatePost.mutateAsync(updatedPost);
             onClose();
         } catch (error) {
@@ -182,7 +192,8 @@ const LightboxPost = ({ postId, onClose, isAdmin }: LightboxPostProps) => {
                                     <p className="text-gray-600 mb-2">{post.location}</p>
                                     <p className="mb-4">{multiFormatDateString(post.$createdAt)}</p>
                                     <div className="flex flex-wrap gap-2 mb-4">
-                                        {post.tags.map((tag, index) => (
+                                        
+                                        {post.tags.map((tag: string, index: number) => (
                                             <span key={index} className="bg-gray-200 rounded-full px-3 py-1 text-sm">
                                                 {tag}
                                             </span>

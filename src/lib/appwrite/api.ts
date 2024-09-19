@@ -123,7 +123,9 @@ export async function signOutAccount() {
 export async function createPost(post: INewPost) {
   try {
     // Convert tags into array
-    const tags = post.tags?.replace(/ /g, "").split(",") || [];
+    const tags = Array.isArray(post.tags) 
+      ? post.tags 
+      : (typeof post.tags === 'string' ? post.tags.replace(/ /g, "").split(",") : []);
 
     // Create post with image URLs
     const newPost = await databases.createDocument(
@@ -299,7 +301,9 @@ export async function getPostById(postId?: string) {
 export async function updatePost(post: IUpdatePost) {
   try {
     // Convert tags into array
-    const tags = post.tags?.replace(/ /g, "").split(",") || [];
+    const tags = Array.isArray(post.tags) 
+  ? post.tags 
+  : (typeof post.tags === 'string' ? post.tags.replace(/ /g, "").split(",") : []);
 
     // Update post with image URLs
     const updatedPost = await databases.updateDocument(

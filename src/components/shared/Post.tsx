@@ -11,9 +11,10 @@ type PostProps = {
   post: Models.Document;
   newToSite?: boolean;
   dragHandleProps?: any;
+  isAdmin?: boolean;
 }
 
-const Post = ({ post, newToSite, dragHandleProps }: PostProps) => {
+const Post = ({ post, newToSite, dragHandleProps, isAdmin }: PostProps) => {
   const navigate = useNavigate();
 
   const { imageUrls, $id } = post;
@@ -40,8 +41,6 @@ const Post = ({ post, newToSite, dragHandleProps }: PostProps) => {
           <img
             className="rounded-xl w-full user-drag-none"
             style={{
-              userDrag: 'none',
-              WebkitUserDrag: 'none',
               userSelect: 'none',
               MozUserSelect: 'none',
               WebkitUserSelect: 'none',

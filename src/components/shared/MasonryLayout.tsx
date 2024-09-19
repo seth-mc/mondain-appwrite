@@ -4,6 +4,8 @@ import { Post, LightboxPost } from '@/components/shared';
 import { Models } from 'appwrite';
 import { DragDropContext, Droppable, Draggable } from '@hello-pangea/dnd';
 import { AnimatePresence } from 'framer-motion';
+import { DropResult } from '@hello-pangea/dnd';
+
 
 type PostsProps = {
   posts: Models.Document[];
@@ -36,9 +38,9 @@ const MasonryLayout = ({ newToSite, posts, isAdmin = true }: PostsProps) => {
     setOrderedPosts(posts);
   }, [posts]);
 
-  const onDragEnd = (result) => {
+  const onDragEnd = (result: DropResult) => {
     if (!result.destination || !isAdmin) return;
-
+  
     const items = Array.from(orderedPosts);
     const [reorderedItem] = items.splice(result.source.index, 1);
     items.splice(result.destination.index, 0, reorderedItem);
@@ -87,7 +89,7 @@ const MasonryLayout = ({ newToSite, posts, isAdmin = true }: PostsProps) => {
         {selectedPostId && (
           <LightboxPost
             postId={selectedPostId}
-            newToSite={newToSite}
+            newToSite={newToSite ?? false}
             isAdmin={isAdmin}
             onClose={() => {
               setSelectedPostId(null);

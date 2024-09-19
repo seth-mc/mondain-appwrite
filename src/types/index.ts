@@ -28,9 +28,11 @@ export type IUpdatePost = {
   imageIds: string[];
   imageUrls: string[];
   location?: string;
-  tags?: string;
+  tags: string[] | string;
+  content?: string;
   imageSeo?: string;
   category: string;
+  order: number;
 };
 
 export type IUser = {
