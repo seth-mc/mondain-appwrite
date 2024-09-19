@@ -32,7 +32,7 @@ export type IUpdatePost = {
   content?: string;
   imageSeo?: string;
   category: string;
-  order: number;
+  order?: number;
 };
 
 export type IUser = {
