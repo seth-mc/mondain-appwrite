@@ -37,7 +37,7 @@ export default class PlayerComponent extends React.Component<object, State> {
             playButtonState: "player__button__play",
             button: "PLAY",
             playerOpen: null,
-            playerwidth: "0px",
+            playerwidth: "300px",
             record: "record d",
             duration: "",
             playlistimg: "https://i1.sndcdn.com/artworks-JH2uC966LI0mbntK-yaC4bw-t500x500.jpg",

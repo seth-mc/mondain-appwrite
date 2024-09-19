@@ -41,7 +41,7 @@ const App = () => {
           <Route path="/sign-up" element={<SignupForm darkMode={darkMode}/>} />
         </Route>
         <Route element={<RootLayout isAdmin={isAdmin} darkMode={darkMode} toggleDarkMode={toggleDarkMode} />}>
-          <Route index element={<Home darkMode={darkMode} toggleDarkMode={toggleDarkMode} />} />
+          <Route index element={<Home isAdmin={isAdmin}darkMode={darkMode} toggleDarkMode={toggleDarkMode} />} />
           <Route path="/dj" element={<Dj />} />
 
           {/* private routes */}

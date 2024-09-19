@@ -311,6 +311,8 @@ export async function updatePost(post: IUpdatePost) {
         imageUrls: post.imageUrls,
         location: post.location,
         tags: tags,
+        order: post.order,
+        content: post.content,
       }
     );
 

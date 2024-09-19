@@ -1,11 +1,14 @@
-import { useEffect, useState } from 'react';
+import { useState, useEffect } from 'react';
 import Masonry from 'react-masonry-css';
-import { Post } from '@/components/shared';
+import { Post, LightboxPost } from '@/components/shared';
 import { Models } from 'appwrite';
+import { DragDropContext, Droppable, Draggable } from '@hello-pangea/dnd';
+import { AnimatePresence } from 'framer-motion';
 
 type PostsProps = {
   posts: Models.Document[];
   newToSite?: boolean;
+  isAdmin?: boolean;
 };
 
 const breakpointColumnsObj = {
@@ -17,48 +20,84 @@ const breakpointColumnsObj = {
   500: 1,
 };
 
-const MasonryLayout = ({ newToSite, posts }: PostsProps) => {
-  const [visiblePosts, setVisiblePosts] = useState<Models.Document[]>([]);
-  const [renderedPostIds, setRenderedPostIds] = useState<string[]>([]);
+const MasonryLayout = ({ newToSite, posts, isAdmin = true }: PostsProps) => {
+  const [orderedPosts, setOrderedPosts] = useState<Models.Document[]>(posts);
+  const [selectedPostId, setSelectedPostId] = useState<string | null>(null);
 
   useEffect(() => {
-    let timeoutId: NodeJS.Timeout;
-
-    const staggerPosts = (index: number) => {
-      if (index < posts.length) {
-        const post = posts[index];
-        if (!renderedPostIds.includes(post.$id)) {
-          timeoutId = setTimeout(() => {
-            setVisiblePosts((prevVisiblePosts) => [...prevVisiblePosts, post]);
-            setRenderedPostIds((prevRenderedPostIds) => [...prevRenderedPostIds, post.$id]);
-            if (index + 1 < posts.length && !renderedPostIds.includes(posts[index + 1].$id)) {
-              setVisiblePosts((prevVisiblePosts) => [...prevVisiblePosts, posts[index + 1]]);
-              setRenderedPostIds((prevRenderedPostIds) => [...prevRenderedPostIds, posts[index + 1].$id]);
-            }
-            if (index + 2 < posts.length && !renderedPostIds.includes(posts[index + 2].$id)) {
-              setVisiblePosts((prevVisiblePosts) => [...prevVisiblePosts, posts[index + 2]]);
-              setRenderedPostIds((prevRenderedPostIds) => [...prevRenderedPostIds, posts[index + 2].$id]);
-            }
-            staggerPosts(index + 1);
-          }, 500);
-        } else {
-          staggerPosts(index + 1);
-        }
-      }
+    const handlePostSelected = (e: CustomEvent) => {
+      setSelectedPostId(e.detail.postId);
     };
+    window.addEventListener('postSelected', handlePostSelected as EventListener);
+    return () => window.removeEventListener('postSelected', handlePostSelected as EventListener);
+  }, []);
 
-    staggerPosts(0);
+  useEffect(() => {
+    setOrderedPosts(posts);
+  }, [posts]);
 
-    return () => clearTimeout(timeoutId);
-  }, [posts, renderedPostIds]);
+  const onDragEnd = (result) => {
+    if (!result.destination || !isAdmin) return;
+
+    const items = Array.from(orderedPosts);
+    const [reorderedItem] = items.splice(result.source.index, 1);
+    items.splice(result.destination.index, 0, reorderedItem);
+
+    setOrderedPosts(items);
+    // TODO: Implement API call to update order in the database
+  };
 
   return (
-    <Masonry className="d flex animate-slide-fwd" breakpointCols={breakpointColumnsObj}>
-      {visiblePosts.map((post: Models.Document) => (
-        <Post newToSite={newToSite} key={post.$id} post={post} />
-      ))}
-    </Masonry>
+    <DragDropContext onDragEnd={onDragEnd}>
+      <Droppable droppableId="posts" type="COLUMN">
+        {(provided) => (
+          <div {...provided.droppableProps} ref={provided.innerRef}>
+            <Masonry
+              breakpointCols={breakpointColumnsObj}
+              className="flex animate-slide-fwd"
+              columnClassName="my-masonry-grid_column"
+            >
+              {orderedPosts.map((post, index) => (
+                <Draggable key={post.$id} draggableId={post.$id} index={index} isDragDisabled={!isAdmin}>
+                  {(provided, snapshot) => (
+                    <div
+                      ref={provided.innerRef}
+                      {...provided.draggableProps}
+                      style={{
+                        ...provided.draggableProps.style,
+                        opacity: snapshot.isDragging ? 0.5 : 1,
+                      }}
+                    >
+                      <Post
+                        newToSite={newToSite}
+                        post={post}
+                        dragHandleProps={provided.dragHandleProps}
+                        isAdmin={isAdmin}
+                      />
+                    </div>
+                  )}
+                </Draggable>
+              ))}
+            </Masonry>
+            {provided.placeholder}
+          </div>
+        )}
+      </Droppable>
+      <AnimatePresence>
+        {selectedPostId && (
+          <LightboxPost
+            postId={selectedPostId}
+            newToSite={newToSite}
+            isAdmin={isAdmin}
+            onClose={() => {
+              setSelectedPostId(null);
+              window.history.pushState(null, '', window.location.pathname);
+            }}
+          />
+        )}
+      </AnimatePresence>
+    </DragDropContext>
   );
-};
+}
 
 export default MasonryLayout;

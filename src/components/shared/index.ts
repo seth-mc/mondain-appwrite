@@ -9,3 +9,4 @@ export { default as ThemeProvider } from './ThemeProvider';
 export { asciiFrame as CubeLoader } from './CubeLoader';
 export { default as PlayerComponent } from './Player';
 export { default as CarouselPlugin } from './CarouselPlugin';
+export { default as LightboxPost } from './LightboxPost';

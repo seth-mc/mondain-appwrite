@@ -10,12 +10,12 @@ import { Search } from "lucide-react";
 import { useUserContext } from "@/context/AuthContext";
 
 
-const Home = ({ darkMode }: DarkModeProps) => {
+const Home = ({ darkMode, isAdmin }: DarkModeProps) => {
   const { ref, inView } = useInView();
   // eslint-disable-next-line @typescript-eslint/ban-types
   const { data: posts, fetchNextPage, hasNextPage } = useGetPosts() as unknown as { data: PostsQueryResult, fetchNextPage: Function, hasNextPage: boolean };  
   const [allPosts, setAllPosts] = useState([]);
-  const [activeCategory, setActiveCategory] = useState('mondain');
+  const [activeCategory, setActiveCategory] = useState('');
   const [searchValue, setSearchValue] = useState("");
   const debouncedSearch = useDebounce(searchValue, 500);
   const { data: searchedPosts, isFetching: isSearchFetching } = useSearchPosts(debouncedSearch, activeCategory);
@@ -64,8 +64,6 @@ const Home = ({ darkMode }: DarkModeProps) => {
           alt="logo"
         />
       </div>
-      { newToSite ? (
-         <div></div> ) : (
       <div className="px-8 sm:px-10 md:px-20 lg:px-80 flex gap-2 w-full mt-5 pb-7 scroll-transition-fade">
         <div className="text-dark-1 flex justify-start items-center w-full px-2 rounded-xl bg-light-1 border-2 border-dark-1 focus-within:shadow-sm">
           <Search className="ml-1"/>
@@ -82,7 +80,6 @@ const Home = ({ darkMode }: DarkModeProps) => {
           />
         </div>
       </div>
-      )}
       <div className="hidden sm:flex lg:flex">
       <div className="lg:px-20 md:px-20 sm:px-0 px-5 flex flex-wrap justify-center gap-2">
         {categories.map(category => (
@@ -118,18 +115,10 @@ const Home = ({ darkMode }: DarkModeProps) => {
         ) : shouldShowPosts ? (
           <p className="text-light-4 mt-10 text-center w-full">End of posts</p>
         ) : (
-          <MasonryLayout newToSite={newToSite} posts={allPosts} />
+          <MasonryLayout isAdmin={isAdmin} newToSite={newToSite} posts={allPosts} />
         )}
       </div>
-      {newToSite ? (
-        <div>
-        <a href="/sign-in">
-          <div className="text-light-4 pb-20 mt-10 text-center w-full font-spacemono">Sign in to view more
-        </div>
-        </a>
-        </div>
-        ) : 
-        hasNextPage && !searchValue && (
+      {hasNextPage && !searchValue && (
         <div ref={ref} className="mt-10">
           <Loader />
         </div>
