@@ -1,3 +1,4 @@
+import React from 'react';
 import { multiFormatDateString } from '@/lib/utils';
 import { Models } from 'appwrite';
 import { useNavigate } from 'react-router-dom';
@@ -14,8 +15,14 @@ type PostProps = {
   isAdmin?: boolean;
 }
 
+
 const Post = ({ post, newToSite, dragHandleProps, isAdmin }: PostProps) => {
   const navigate = useNavigate();
+
+  React.useEffect(() => {
+    console.log('Post props:', { newToSite, isAdmin });
+    console.log('Navigate function:', navigate);
+  }, [newToSite, isAdmin, navigate]);
 
   const { imageUrls, $id } = post;
 
