@@ -82,11 +82,18 @@ export const useGetPosts = () => {
 
 // Search posts in the search field
 export const useSearchPosts = (searchValue: string, activeCategory?: string) => {
-  return useQuery({
+  return useInfiniteQuery({
     queryKey: [QUERY_KEYS.SEARCH_POSTS, searchValue, activeCategory],
-    queryFn: () => searchPosts(searchValue, activeCategory),
+    queryFn: async ({ pageParam }: { pageParam?: string }) => {
+      return searchPosts(searchValue, activeCategory, pageParam);
+    },
+    getNextPageParam: (lastPage) => {
+      if (lastPage.documents.length === 0) return undefined;
+      return lastPage.documents[lastPage.documents.length - 1].$id;
+    },
+    initialPageParam: undefined,
     enabled: !!searchValue || !!activeCategory,
-});
+  });
 };
 
 

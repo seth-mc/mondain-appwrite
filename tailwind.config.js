@@ -78,7 +78,8 @@ module.exports = {
       },
       fontFamily: {
         inter: ['Inter', 'sans-serif'],
-        spacemono: ['"Space Mono"', ...defaultTheme.fontFamily.sans],
+        times: ['"Times New Roman"', ...defaultTheme.fontFamily.sans],
+        courier: ['"Courier Prime"', 'monospace'],
       },
       keyframes: {
         fadeIn: {

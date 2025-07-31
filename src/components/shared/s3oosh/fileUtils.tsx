@@ -60,7 +60,7 @@ export const generateThumbnails = (filesToUpload: File[]) => {
   const newThumbnails: Record<string, string> = {};
 
   filesToUpload.forEach((f) => {
-    if (f.type.startsWith("image")) {
+    if (f.type.startsWith("image") || f.type.startsWith("video")) {
       const objectUrl = URL.createObjectURL(f as unknown as Blob);
       newThumbnails[f.name] = objectUrl;
     }

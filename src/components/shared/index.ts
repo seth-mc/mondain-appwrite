@@ -1,6 +1,5 @@
 export { default as Bottombar } from "./Bottombar";
 export { default as Loader } from "./Loader";
-export { default as Topbar } from "./Topbar";
 export { default as Post } from "./Post";
 export { default as SearchResults } from "./SearchResults";
 export { default as Searchbox } from "./Searchbox";
@@ -10,3 +9,7 @@ export { asciiFrame as CubeLoader } from './CubeLoader';
 export { default as PlayerComponent } from './Player';
 export { default as CarouselPlugin } from './CarouselPlugin';
 export { default as LightboxPost } from './LightboxPost';
+export { default as PostStats } from './PostStats';
+export { default as Header } from './Header';
+export { default as Sidebar } from './Sidebar';
+export { default as ProfileDropdown } from './ProfileDropdown';

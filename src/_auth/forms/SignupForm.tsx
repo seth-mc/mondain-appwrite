@@ -74,7 +74,7 @@ const { mutateAsync: signInAccount, isPending: isSigningInUser } = useSignInAcco
   return (
     <Form {...form}>
       <div className="sm:w-420 flex-center flex-col">
-        <img className={`d cursor-pointer w-52 ${darkMode ? 'invert' : ''}`} src="/assets/images/logo-black.svg" alt="logo" />
+        <img className={`d cursor-pointer w-52 ${darkMode ? 'invert' : ''}`}  src="/assets/icons/seth-porti.gif" alt="logo" />
 
         <h2 className="shad-form_label h3-bold md:h2-bold pt-5 sm:pt-12">
           Create a new account

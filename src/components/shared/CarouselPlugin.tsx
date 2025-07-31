@@ -54,7 +54,7 @@ function CarouselPlugin({ activeCategory, categories, setActiveCategory, setSear
                     {/* Add your button icon here */}
                   </button>
                   <p
-                    className={`cursor-pointer p-2 text-dark-1 font-spacemono transition duration-300 ease-in-out ${activeCategory === category.name ? 'text-dark-1' : 'text-light-3'} rounded-full`}
+                    className={`cursor-pointer p-2 text-dark-1 font-times transition duration-300 ease-in-out ${activeCategory === category.name ? 'text-dark-1' : 'text-light-3'} rounded-full`}
                   >
                     {category.name}
                   </p>

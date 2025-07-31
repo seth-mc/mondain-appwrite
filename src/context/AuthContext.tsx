@@ -53,23 +53,21 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           bio: currentAccount.bio,
           admin: currentAccount.admin,
         });
-
         
         setIsAuthenticated(true);
-
         return true;
       } 
-
       
       return false;
     } catch (error) {
       console.error("Error fetching current user", error);
+      setUser(INITIAL_USER);
+      setIsAuthenticated(false);
       return false;
     } finally {
       setIsLoading(false);
     }
   };
-
 
   useEffect(() => {
     const cookieFallback = localStorage.getItem("cookieFallback");
@@ -78,13 +76,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       cookieFallback !== null &&
       cookieFallback !== undefined
     ) {
-      // Parse the cookieFallback string into an object
-      const cookieFallbackData = JSON.parse(cookieFallback);
-      // Update the user state with the data from cookieFallback
-      setUser(cookieFallbackData);
+      checkAuthUser();
+    } else {
+      setUser(INITIAL_USER);
+      setIsAuthenticated(false);
     }
-  
-    checkAuthUser();
   }, []);
 
   const value = {
@@ -96,16 +92,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     checkAuthUser,
   };
 
-  
-
-
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }
 
 export default AuthProvider;
 
 export const useUserContext = () => {
-  const context = useContext(AuthContext);
-  
-  return context;
+  return useContext(AuthContext);
 };

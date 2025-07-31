@@ -15,7 +15,7 @@ const itemVariants: Variants = {
   closed: { opacity: 0, y: 20, transition: { duration: 0.2 } }
 };
 
-export function ProfileDropdown({ isAdmin, darkMode, toggleDarkMode }: { isAdmin?: boolean, darkMode: boolean, toggleDarkMode: () => void }) {
+const ProfileDropdown = ({ isAdmin, darkMode, toggleDarkMode }: { isAdmin?: boolean, darkMode: boolean, toggleDarkMode: () => void }) => {
   const navigate = useNavigate();
   const dropdownRef = useRef(null);
   const { user, setUser, setIsAuthenticated, isLoading } = useUserContext();
@@ -64,10 +64,10 @@ export function ProfileDropdown({ isAdmin, darkMode, toggleDarkMode }: { isAdmin
             whileTap={{ scale: 0.90 }}
             onClick={() => setIsOpen(!isOpen)}
           >
-            <img src={user?.email ? user.imageUrl : "/assets/icons/profile-placeholder.svg"} alt="profile" className="d w-32 h-25 rounded-full border border-1 border-dark-1" />
+            <img src={user?.email ? user.imageUrl : "/assets/icons/m-profile.gif"} alt="profile" className={`d w-[32px] border border-1 border-dark-2 ${darkMode ? 'invert' : ''}`} />
           </motion.button>
           <motion.ul
-            className="absolute d !z-20 right-0 top-0 mt-20 mr-2 rounded-lg bg-light-1  border-dark-1 shadow-lg overflow-hidden"
+            className="absolute d !z-20 right-0 top-0 mt-20 mr-2 bg-light-1 border-dark-1 shadow-lg overflow-hidden"
             variants={{
               open: {
                 clipPath: "inset(0% 0% 0% 0% round 10px)",
@@ -164,4 +164,6 @@ export function ProfileDropdown({ isAdmin, darkMode, toggleDarkMode }: { isAdmin
       )}
     </div>
   );
-}
+};
+
+export default ProfileDropdown;

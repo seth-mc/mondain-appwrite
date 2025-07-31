@@ -6,6 +6,12 @@ export enum FileStatus {
   Error = "error",
 }
 
+export enum FileTypes {
+  Image = "image",
+  Video = "video",
+  Gif = "gif",
+}
+
 export interface FileUploadProgress {
   error?: Error | undefined | unknown | null;
   progress: number;
@@ -13,4 +19,7 @@ export interface FileUploadProgress {
   source: CancelTokenSource | null;
   status: FileStatus;
   newFileName?: string;
+  isVideo?: boolean;
+  thumbnailUrl?: string;
+  permanentUrl?: string;
 }

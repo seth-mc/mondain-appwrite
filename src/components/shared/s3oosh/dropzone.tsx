@@ -10,6 +10,7 @@ import { FileUploadProgress, FileStatus } from "./types";
 import { generateThumbnails, getFileUrl, revokeThumbnails } from "./fileUtils";
 import FileCard from "./file-card";
 import { HardDriveUploadIcon } from "lucide-react";
+import { useVideoProcessor } from "./_actions/videoProcessor";
 
 interface DropzoneComponentProps {
   maxTotalFiles: number;
@@ -50,6 +51,7 @@ const DropzoneComponent: React.FC<DropzoneComponentProps> = ({
 }) => {
   const [thumbnails, setThumbnails] = useState<Record<string, string>>({});
   const [permanentUrls, setPermanentUrls] = useState<string[]>([]);
+  const { processVideoToGif } = useVideoProcessor();
 
   useEffect(() => {
     if (onUploadComplete && permanentUrls.length > 0) {
@@ -70,6 +72,8 @@ const DropzoneComponent: React.FC<DropzoneComponentProps> = ({
 
   const onDrop = useCallback(
     async (acceptedFiles: File[]) => {
+      console.log("Accepted files:", acceptedFiles);
+      console.log("File types:", acceptedFiles.map(f => f.type));
       setErrorMessage("");
       if (
         !maxTotalFiles ||
@@ -80,51 +84,126 @@ const DropzoneComponent: React.FC<DropzoneComponentProps> = ({
         );
         return;
       }
+
       const fileUploadBatch = acceptedFiles.map(async (file) => {
         try {
-          const presignedUrlResponse = await getPreSignedUrl(
-            file.name,
-            file.type,
-            dirInBucket
-          );
-          const { url: presignedUrl, newFileName } = presignedUrlResponse;
+          let isVideo = file.type.startsWith('video/');
+          let gifUrl: string | null = null;
 
-          setUploadUrls((prevUrls) => ({
-            ...prevUrls,
-            [newFileName]: presignedUrl,
-          }));
+          if (isVideo) {
+            console.log("Processing video to GIF:", file.name);
+            // Convert video to GIF and get the URL
+            gifUrl = await processVideoToGif(file);
+            console.log("Video converted to GIF:", gifUrl);
+          }
 
-          const source = axios.CancelToken.source();
-          setFilesToUpload((prev) => [
-            ...prev,
-            { progress: 0, file, source, status: FileStatus.Uploading },
-          ]);
+          if (isVideo && gifUrl) {
+            // Download the GIF from local server and upload to S3
+            const gifResponse = await fetch(gifUrl);
+            const gifBlob = await gifResponse.blob();
+            
+            // Create a new File object from the GIF blob
+            const gifFile = new File([gifBlob], file.name.replace(/\.[^/.]+$/, '.gif'), {
+              type: 'image/gif'
+            });
+            
+            // Upload the GIF to S3 using the same flow as images
+            const presignedUrlResponse = await getPreSignedUrl(
+              gifFile.name,
+              gifFile.type,
+              dirInBucket
+            );
+            const { url: presignedUrl, newFileName } = presignedUrlResponse;
 
-          await axios.put(presignedUrl, file, {
-            headers: { "Content-Type": file.type },
-            cancelToken: source.token,
-            onUploadProgress: (progressEvent: AxiosProgressEvent) =>
-              onUploadProgress(
-                progressEvent,
-                file,
-                source,
-                FileStatus.Uploading
-              ),
-          });
+            setUploadUrls((prevUrls) => ({
+              ...prevUrls,
+              [newFileName]: presignedUrl,
+            }));
 
-          const permanentUrl = await getFileUrl(newFileName);
-          console.log("Permanent URL:", permanentUrl);
+            const source = axios.CancelToken.source();
+            setFilesToUpload((prev) => [
+              ...prev,
+              { 
+                progress: 0, 
+                file: file, 
+                source, 
+                status: FileStatus.Uploading,
+                isVideo: true
+              },
+            ]);
 
-          setPermanentUrls((prev) => [...prev, permanentUrl]);
+            await axios.put(presignedUrl, gifFile, {
+              headers: { "Content-Type": gifFile.type },
+              cancelToken: source.token,
+              onUploadProgress: (progressEvent) =>
+                onUploadProgress(progressEvent, file, source, FileStatus.Uploading),
+            });
 
+            const permanentUrl = await getFileUrl(newFileName);
+            setPermanentUrls((prev) => [...prev, permanentUrl]);
+            
+            setFilesToUpload((prevUploadProgress) =>
+              prevUploadProgress.map((item) =>
+                item.file.name === file.name
+                  ? { 
+                      ...item, 
+                      status: FileStatus.Uploaded, 
+                      newFileName, 
+                      permanentUrl,
+                      thumbnailUrl: permanentUrl // GIF serves as its own thumbnail
+                    }
+                  : item
+              )
+            );
+          } else {
+            // For images, proceed with normal S3 upload
+            const presignedUrlResponse = await getPreSignedUrl(
+              file.name,
+              file.type,
+              dirInBucket
+            );
+            const { url: presignedUrl, newFileName } = presignedUrlResponse;
 
-          setFilesToUpload((prevUploadProgress) =>
-            prevUploadProgress.map((item) =>
-              item.file.name === file.name
-                ? { ...item, status: FileStatus.Uploaded, newFileName, permanentUrl }
-                : item
-            )
-          );
+            setUploadUrls((prevUrls) => ({
+              ...prevUrls,
+              [newFileName]: presignedUrl,
+            }));
+
+            const source = axios.CancelToken.source();
+            setFilesToUpload((prev) => [
+              ...prev,
+              { 
+                progress: 0, 
+                file: file, 
+                source, 
+                status: FileStatus.Uploading,
+                isVideo: false
+              },
+            ]);
+
+            await axios.put(presignedUrl, file, {
+              headers: { "Content-Type": file.type },
+              cancelToken: source.token,
+              onUploadProgress: (progressEvent) =>
+                onUploadProgress(progressEvent, file, source, FileStatus.Uploading),
+            });
+
+            const permanentUrl = await getFileUrl(newFileName);
+            setPermanentUrls((prev) => [...prev, permanentUrl]);
+            
+            setFilesToUpload((prevUploadProgress) =>
+              prevUploadProgress.map((item) =>
+                item.file.name === file.name
+                  ? { 
+                      ...item, 
+                      status: FileStatus.Uploaded, 
+                      newFileName, 
+                      permanentUrl
+                    }
+                  : item
+              )
+            );
+          }
         } catch (error) {
           console.error("Error uploading file:", file.name, error);
           setFilesToUpload((prevUploadProgress) =>
@@ -144,13 +223,17 @@ const DropzoneComponent: React.FC<DropzoneComponentProps> = ({
       }
       setErrorMessage("");
     },
-    [setErrorMessage, maxTotalFiles, filesToUpload.length, dirInBucket, setUploadUrls, setFilesToUpload, onUploadProgress]
+    [setErrorMessage, maxTotalFiles, filesToUpload.length, dirInBucket, setUploadUrls, setFilesToUpload, onUploadProgress, processVideoToGif]
   );
 
   const { getRootProps, getInputProps } = useDropzone({
     onDrop,
-    accept: acceptedFileTypes,
+    accept: {
+      'image/*': acceptedFileTypes['image/*'],
+      'video/*': acceptedFileTypes['video/*']
+    },
     maxSize: maxSize,
+    multiple: true
   });
 
   const inputProps = getInputProps() as React.InputHTMLAttributes<HTMLInputElement> & { ref: Ref<HTMLInputElement> };

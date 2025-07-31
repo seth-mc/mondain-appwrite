@@ -8,8 +8,8 @@ export const sections = [
       route: '/dj',
     },
     {
-      label: 'the rack',
-      route: '/the-rack',
+      label: 'shop',
+      route: '/shop',
     }
 ]
 
@@ -25,6 +25,15 @@ export const adminSections = [
 ]
 
 export const categories = [
+  {
+    name: 'posters',
+  },
+  {
+    name: 'videos',
+  },
+  {
+    name: 'digital',
+  },
   {
     name: 'mondain',
   },
@@ -65,4 +74,19 @@ export const categories = [
     name: 'celebs', 
   }, 
   
+];
+
+export const mainCategories = [
+  {
+    name: 'POSTERS',
+    subcategories: ['nature', 'city', 'architecture', 'art', 'mondain', 'fitness', 'clothing', 'celebs', 'posters']
+  },
+  {
+    name: 'VIDEO',
+    subcategories: ['movies', 'music', 'videos']
+  },
+  {
+    name: 'DIGITAL',
+    subcategories: ['web', 'inspiration', 'digital']
+  }
 ];

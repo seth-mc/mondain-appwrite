@@ -5,3 +5,4 @@ export { default as Profile } from './Profile';
 export { default as UpdateProfile } from './UpdateProfile';
 export { default as PostDetails } from './PostDetails';
 export { default as Dj } from './Dj';
+export { default as Contact } from './Contact';

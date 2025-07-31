@@ -1,215 +1,259 @@
-import { useEffect, useState } from 'react';
-import { useGetPostById, useUpdatePost } from "@/lib/react-query/queries";
-import { multiFormatDateString } from "@/lib/utils";
-import { ChevronLeft, ChevronRight, X } from "lucide-react";
+import React, { useEffect, useState } from 'react';
+import { Models } from 'appwrite';
 import { motion, AnimatePresence } from 'framer-motion';
-import { deletePost } from "@/lib/appwrite/api";
-import { useQueryClient } from "@tanstack/react-query";
-import { IUpdatePost } from '@/types';
+import { appwriteConfig, databases } from '@/lib/appwrite/config';
 
 type LightboxPostProps = {
-    postId: string | null;
-    onClose: () => void;
-    isAdmin: boolean;
-    newToSite: boolean;
-};
+  postId: string;
+  newToSite: boolean;
+  isAdmin: boolean;
+  onClose: () => void;
+  onNext: () => void;
+  onPrevious: () => void;
+  currentIndex: number;
+  totalItems: number;
+  allPosts: Models.Document[];
+}
 
-const LightboxPost = ({ postId, onClose, isAdmin }: LightboxPostProps) => {
-    const { data: post, isLoading } = useGetPostById(postId || undefined);
-    const updatePost = useUpdatePost();
-    const queryClient = useQueryClient();
-    const [currentImageIndex, setCurrentImageIndex] = useState(0);
-    const [order, setOrder] = useState<number | null>(null);
-    const [caption, setCaption] = useState('');
-    const [location, setLocation] = useState('');
-    const [tags, setTags] = useState('');
-    //const [content, setContent] = useState('');
+const LightboxPost = ({ 
+  postId, 
+  onClose, 
+  onNext, 
+  onPrevious,
+  allPosts
+}: LightboxPostProps) => {
+  const [post, setPost] = React.useState<Models.Document | null>(null);
+  const [isLoading, setIsLoading] = React.useState(true);
+  const [currentImageIndex, setCurrentImageIndex] = useState(0);
+  const [allImages, setAllImages] = useState<{url: string, postId: string}[]>([]);
+  const [currentGlobalIndex, setCurrentGlobalIndex] = useState(0);
+  const [aspectRatio, setAspectRatio] = useState<string>('4/5');
+  const [imageLoaded, setImageLoaded] = useState(false);
 
-    useEffect(() => {
-        if (post) {
-            setOrder(post.order);
-            setCaption(post.caption);
-            setLocation(post.location);
-            setTags(post.tags.join(', '));
-            //setContent(post.content || '');
-        }
-    }, [post]);
-
-    if (isLoading || !post) return null;
-
-    const handleImageSwitch = (direction: 'next' | 'prev') => {
-        if (direction === 'next') {
-            setCurrentImageIndex((prevIndex) =>
-                prevIndex === post.imageUrls.length - 1 ? 0 : prevIndex + 1
-            );
-        } else {
-            setCurrentImageIndex((prevIndex) =>
-                prevIndex === 0 ? post.imageUrls.length - 1 : prevIndex - 1
-            );
-        }
-    };
-
-    const handleDelete = async () => {
-        console.log('Delete button clicked');
-        if (!postId || !post) return;
-        try {
-            // Assuming the first image in the array is the main image
-            const imageId = post.imageUrls[0].split('/').pop() || '';
-            await deletePost(postId, imageId);
-            console.log('Post deleted successfully');
-            // Invalidate and refetch queries
-            await queryClient.invalidateQueries({ queryKey: ["posts"] });
-            await queryClient.invalidateQueries({ queryKey: ["infinitePosts"] });
-            onClose();
-        } catch (error) {
-            console.error('Failed to delete post:', error);
-        }
-    };
-
-    const handleSave = async () => {
-        if (!postId) return;
-    
-        try {
-            const updatedPost: IUpdatePost = {
-                postId,
-                caption,
-                location,
-                tags: tags.split(',').map(tag => tag.trim()),
-                imageUrls: post.imageUrls,
-                imageIds: post.imageIds || [], // Add this line
-                category: post.category || '', // Add this line
-                order: order || 0,
-            };
-    
-            await updatePost.mutateAsync(updatedPost);
-            onClose();
-        } catch (error) {
-            console.error('Failed to update post:', error);
-        }
-    };
-
-    return (
-        <AnimatePresence>
-            <motion.div
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                exit={{ opacity: 0 }}
-                transition={{ duration: 0.3 }}
-                className="fixed inset-0 bg-black bg-opacity-75 z-50 flex items-center justify-center overflow-y-auto"
-                onClick={onClose}
-            >
-                <motion.div
-                    initial={{ opacity: 0, scale: 0.8 }}
-                    animate={{ opacity: 1, scale: 1 }}
-                    exit={{ opacity: 0, scale: 0.8 }}
-                    transition={{ duration: 0.3 }}
-                    className="bg-white rounded-lg max-w-5xl w-full mx-4 my-8 relative"
-                    onClick={(e) => e.stopPropagation()}
-                >
-                    <button
-                        onClick={onClose}
-                        className="absolute top-2 right-2 text-gray-500 hover:text-gray-700"
-                    >
-                        <X size={24} />
-                    </button>
-                    <div className="grid grid-cols-2 gap-4 p-6">
-                        <div className="relative">
-                            <img
-                                src={post.imageUrls[currentImageIndex]}
-                                alt={post.caption}
-                                className="w-full h-auto rounded-lg"
-                            />
-                            {post.imageUrls.length > 1 && (
-                                <>
-                                    <button
-                                        onClick={() => handleImageSwitch('prev')}
-                                        className="absolute top-1/2 left-2 transform -translate-y-1/2 bg-white rounded-full p-2"
-                                    >
-                                        <ChevronLeft />
-                                    </button>
-                                    <button
-                                        onClick={() => handleImageSwitch('next')}
-                                        className="absolute top-1/2 right-2 transform -translate-y-1/2 bg-white rounded-full p-2"
-                                    >
-                                        <ChevronRight />
-                                    </button>
-                                </>
-                            )}
-                        </div>
-                        <div>
-                            {isAdmin ? (
-                                <>
-                                    <input
-                                        type="text"
-                                        value={caption}
-                                        onChange={(e) => setCaption(e.target.value)}
-                                        className="text-2xl font-bold mb-2 w-full"
-                                        placeholder="Caption"
-                                    />
-                                    <input
-                                        type="text"
-                                        value={location}
-                                        onChange={(e) => setLocation(e.target.value)}
-                                        className="text-gray-600 mb-2 w-full"
-                                        placeholder="Location"
-                                    />
-                                    <input
-                                        type="number"
-                                        value={order || ''}
-                                        onChange={(e) => setOrder(Number(e.target.value))}
-                                        className="mb-4 w-full"
-                                        placeholder="Order"
-                                    />
-                                    <input
-                                        type="text"
-                                        value={tags}
-                                        onChange={(e) => setTags(e.target.value)}
-                                        className="mb-4 w-full"
-                                        placeholder="Tags (comma-separated)"
-                                    />
-                                    {/* <textarea
-                                        value={content}
-                                        onChange={(e) => setContent(e.target.value)}
-                                        className="mb-4 w-full h-64"
-                                        placeholder="Content"
-                                    /> */}
-                                    <button
-                                        onClick={handleDelete}
-                                        className="bg-red text-white px-4 py-2 rounded hover:bg-red-600 mr-2"
-                                    >
-                                        Delete Post
-                                    </button>
-                                    <button
-                                        onClick={handleSave}
-                                        className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600"
-                                    >
-                                        Save Changes
-                                    </button>
-                                </>
-                            ) : (
-                                <>
-                                    <h2 className="text-2xl font-bold mb-2">{post.caption}</h2>
-                                    <p className="text-gray-600 mb-2">{post.location}</p>
-                                    <p className="mb-4">{multiFormatDateString(post.$createdAt)}</p>
-                                    <div className="flex flex-wrap gap-2 mb-4">
-                                        
-                                        {post.tags.map((tag: string, index: number) => (
-                                            <span key={index} className="bg-gray-200 rounded-full px-3 py-1 text-sm">
-                                                {tag}
-                                            </span>
-                                        ))}
-                                    </div>
-                                    {/* <div className="h-64 overflow-y-auto">
-                                        <p>{post.content}</p>
-                                    </div> */}
-                                </>
-                            )}
-                        </div>
-                    </div>
-                </motion.div>
-            </motion.div>
-        </AnimatePresence>
+  // Create a flat array of all images across all posts
+  useEffect(() => {
+    const images = allPosts.flatMap(post => 
+      post.imageUrls.map((url: string) => ({ url, postId: post.$id }))
     );
+    setAllImages(images);
+    
+    // Find the current global index
+    const globalIndex = images.findIndex(img => 
+      img.postId === postId && img.url === post?.imageUrls[currentImageIndex]
+    );
+    if (globalIndex !== -1) {
+      setCurrentGlobalIndex(globalIndex);
+    }
+  }, [allPosts, postId, post, currentImageIndex]);
+
+  const handleImageLoad = (e: React.SyntheticEvent<HTMLImageElement>) => {
+    const img = e.target as HTMLImageElement;
+    const width = img.naturalWidth;
+    const height = img.naturalHeight;
+    
+    if (width > height) {
+      // Horizontal image
+      setAspectRatio('5/4');
+    } else if (width < height) {
+      // Vertical image
+      setAspectRatio('4/5');
+    } else {
+      // Square image
+      setAspectRatio('1/1');
+    }
+    setImageLoaded(true);
+  };
+
+  useEffect(() => {
+    const fetchPost = async () => {
+      try {
+        const response = await databases.getDocument(
+          appwriteConfig.databaseId,
+          appwriteConfig.postCollectionId,
+          postId
+        );
+        setPost(response);
+      } catch (error) {
+        console.error('Error fetching post:', error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchPost();
+  }, [postId]);
+
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        onClose();
+      } else if (e.key === 'ArrowRight') {
+        handleNextImage();
+      } else if (e.key === 'ArrowLeft') {
+        handlePreviousImage();
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [onClose, currentGlobalIndex, allImages]);
+
+  const handleNextImage = () => {
+    if (currentGlobalIndex < allImages.length - 1) {
+      const nextImage = allImages[currentGlobalIndex + 1];
+      if (nextImage.postId !== postId) {
+        // If we're moving to a new post, update the post
+        setPost(allPosts.find(p => p.$id === nextImage.postId) || null);
+        setCurrentImageIndex(0);
+        onNext();
+      } else {
+        // If we're staying in the same post, just update the image index
+        setCurrentImageIndex(prev => prev + 1);
+      }
+      setCurrentGlobalIndex(prev => prev + 1);
+      setImageLoaded(false);
+    }
+  };
+
+  const handlePreviousImage = () => {
+    if (currentGlobalIndex > 0) {
+      const prevImage = allImages[currentGlobalIndex - 1];
+      if (prevImage.postId !== postId) {
+        // If we're moving to a new post, update the post
+        setPost(allPosts.find(p => p.$id === prevImage.postId) || null);
+        const prevPost = allPosts.find(p => p.$id === prevImage.postId);
+        setCurrentImageIndex(prevPost ? prevPost.imageUrls.length - 1 : 0);
+        onPrevious();
+      } else {
+        // If we're staying in the same post, just update the image index
+        setCurrentImageIndex(prev => prev - 1);
+      }
+      setCurrentGlobalIndex(prev => prev - 1);
+      setImageLoaded(false);
+    }
+  };
+
+  if (isLoading || !post) return null;
+
+  const isVideo = post.mediaType === 'video';
+  const { imageUrls, thumbnailUrl } = post;
+
+  return (
+    <AnimatePresence>
+      <motion.div
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        exit={{ opacity: 0 }}
+        transition={{ duration: 0.3 }}
+        className="fixed inset-0 z-50 flex items-center justify-center bg-black/80"
+        onClick={(e) => {
+          if (e.target === e.currentTarget) {
+            onClose();
+          }
+        }}
+      >
+        <motion.div
+          initial={{ scale: 0.8 }}
+          animate={{ scale: 1 }}
+          exit={{ scale: 0.8 }}
+          transition={{ duration: 0.3 }}
+          className="relative max-w-4xl w-full mx-4"
+        >
+          <div className="d relative flex items-center justify-center" style={{ aspectRatio }}>
+            {isVideo && thumbnailUrl ? (
+              <img
+                src={thumbnailUrl}
+                alt="video-thumbnail"
+                onLoad={handleImageLoad}
+                className="w-[50%] h-[50%] object-contain"
+                style={{
+                  opacity: imageLoaded ? 1 : 0,
+                  transition: 'opacity 0.3s ease-in-out'
+                }}
+              />
+            ) : (
+              <img
+                src={imageUrls[currentImageIndex]}
+                alt="user-post"
+                onLoad={handleImageLoad}
+                className="d w-[50%] h-[50%] object-contain"
+                style={{
+                  opacity: imageLoaded ? 1 : 0,
+                  transition: 'opacity 0.3s ease-in-out'
+                }}
+              />
+            )}
+          </div>
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
+              onClose();
+            }}
+            className="absolute top-4 right-4 z-50 text-white hover:text-gray-300"
+          >
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              className="h-8 w-8"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M6 18L18 6M6 6l12 12"
+              />
+            </svg>
+          </button>
+
+          <div className="absolute bottom-4 left-4 text-white">
+            {currentGlobalIndex + 1} / {allImages.length}
+          </div>
+
+          <button
+            onClick={handlePreviousImage}
+            className="absolute left-4 top-1/2 -translate-y-1/2 text-white hover:text-gray-300"
+          >
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              className="h-8 w-8"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M15 19l-7-7 7-7"
+              />
+            </svg>
+          </button>
+
+          <button
+            onClick={handleNextImage}
+            className="absolute right-4 top-1/2 -translate-y-1/2 text-white hover:text-gray-300"
+          >
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              className="h-8 w-8"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M9 5l7 7-7 7"
+              />
+            </svg>
+          </button>
+        </motion.div>
+      </motion.div>
+    </AnimatePresence>
+  );
 };
 
 export default LightboxPost;

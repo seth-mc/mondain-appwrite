@@ -12,15 +12,19 @@ export type IUpdateUser = {
   file: File[];
 };
 
-export type INewPost = {
+export interface INewPost {
   userId: string;
   caption: string;
-  imageUrls: string[];
+  file?: File;
   location?: string;
   tags?: string;
-  imageSeo?: string;
-  category: string;
-};
+  mediaType?: string;
+  thumbnailUrl?: string;
+  videoUrl?: string;
+  imageUrls?: string[];
+  category?: string;
+  shopifyProductId?: string;
+}
 
 export type IUpdatePost = {
   postId: string;
@@ -33,6 +37,7 @@ export type IUpdatePost = {
   imageSeo?: string;
   category: string;
   order?: number;
+  shopifyProductId?: string;
 };
 
 export type IUser = {
@@ -62,7 +67,7 @@ export type SearchResultProps = {
 
 export type DarkModeProps = {
   darkMode: boolean;
-  toggleDarkMode?: () => void;
+  toggleDarkMode: () => void;
   isAdmin?: boolean;
 };
 
@@ -95,6 +100,7 @@ export type DocumentType = {
   imageIds: string[];
   category: string;
   thumbnailUrl: string | null;
+  shopifyProductId?: string;
   $id: string;
   $createdAt: string;
   $updatedAt: string;

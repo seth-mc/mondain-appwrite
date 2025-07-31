@@ -1,7 +1,9 @@
-import { ID, Query, ImageGravity } from "appwrite";
+import { ID, Query, ImageGravity, Models } from "appwrite";
 
 import { appwriteConfig, account, databases, storage, avatars, graphql } from "./config";
 import { IUpdatePost, INewPost, INewUser, IUpdateUser, Page } from "@/types";
+import { GifSettings } from "@/types/video";
+import { mainCategories } from "@/constants";
 
 
 // ============================================================
@@ -63,11 +65,12 @@ export async function saveUserToDB(user: {
 // ============================== SIGN IN
 export async function signInAccount(user: { email: string; password: string }) {
   try {
+    // Create email/password session
     const session = await account.createEmailPasswordSession(user.email, user.password);
-
     return session;
   } catch (error) {
-    console.log(error);
+    console.error("SignIn Error:", error);
+    throw error;
   }
 }
 
@@ -120,14 +123,50 @@ export async function signOutAccount() {
 // ============================================================
 
 // ============================== CREATE POST
-export async function createPost(post: INewPost) {
+export async function createPost(post: INewPost & { file?: File }) {
   try {
-    // Convert tags into array
-    const tags = Array.isArray(post.tags) 
-      ? post.tags 
-      : (typeof post.tags === 'string' ? post.tags.replace(/ /g, "").split(",") : []);
+    let fileUrl = '';
+    let uploadedFile;
 
-    // Create post with image URLs
+    // If file is provided, upload it
+    if (post.file) {
+      uploadedFile = await storage.createFile(
+        appwriteConfig.storageId,
+        ID.unique(),
+        post.file
+      );
+
+      if (!uploadedFile) throw Error;
+
+      fileUrl = storage.getFileView(
+        appwriteConfig.storageId,
+        uploadedFile.$id
+      ).toString();
+    } else if (post.imageUrls && post.imageUrls.length > 0) {
+      // If file is not provided but imageUrls are, use the first URL
+      fileUrl = post.imageUrls[0];
+    } else {
+      throw Error("No file or image URL provided");
+    }
+
+    // Convert tags to array
+    const tags = post.tags?.replace(/ /g, "").split(",") || [];
+
+    // Handle empty thumbnailUrl
+    const thumbnailUrl = post.thumbnailUrl === "" ? null : post.thumbnailUrl;
+
+    console.log("Creating post with data:", {
+      creator: [post.userId],
+      caption: post.caption,
+      imageUrls: post.imageUrls || [fileUrl],
+      location: post.location,
+      tags: tags,
+      mediaType: post.mediaType || 'image',
+      thumbnailUrl: thumbnailUrl,
+      category: post.category
+    });
+
+    // Create post
     const newPost = await databases.createDocument(
       appwriteConfig.databaseId,
       appwriteConfig.postCollectionId,
@@ -135,20 +174,26 @@ export async function createPost(post: INewPost) {
       {
         creator: post.userId,
         caption: post.caption,
-        imageUrls: post.imageUrls, // Assuming post.file now contains URLs
+        imageUrls: post.imageUrls || [fileUrl],
         location: post.location,
-        tags,
-        category: post.category
+        tags: tags,
+        mediaType: post.mediaType || 'image',
+        thumbnailUrl: thumbnailUrl,
+        category: post.category,
+        shopifyProductId: post.shopifyProductId || null
       }
     );
 
     if (!newPost) {
-      throw new Error("Failed to create new post");
+      if (uploadedFile?.$id) {
+        await storage.deleteFile(appwriteConfig.storageId, uploadedFile.$id);
+      }
+      throw Error;
     }
 
     return newPost;
   } catch (error) {
-    console.error("Failed to create post:", error);
+    console.error("Error in createPost:", error);
     throw error;
   }
 }
@@ -211,45 +256,75 @@ export async function deleteFile(fileId: string) {
 }
 
 // ============================== SEARCH POSTS
-export async function searchPosts(searchTerm: string, activeCategory?: string) {
+export async function searchPosts(searchTerm: string, activeCategory?: string, pageParam?: string): Promise<Models.DocumentList<Models.Document>> {
   try {
-    if (!searchTerm) {
-      if (activeCategory && activeCategory !== "") {
-        const posts = await databases.listDocuments(
-          appwriteConfig.databaseId,
-          appwriteConfig.postCollectionId,
-          [Query.search("category", activeCategory)]
-        );
-        return posts;
-      }
+    const queries: any[] = [
+      Query.orderAsc("order"),  // Sort by order field first
+      Query.orderDesc("$createdAt"),  // Then by creation date
+      Query.limit(9)  // Same limit as getInfinitePosts
+    ];
+
+    if (pageParam) {
+      queries.push(Query.cursorAfter(pageParam.toString()));
     }
 
-    const searchTermArray = [searchTerm.toLowerCase(), searchTerm.toUpperCase(), searchTerm.charAt(0).toUpperCase() + searchTerm.slice(1)];
-    const posts = await databases.listDocuments(
-      appwriteConfig.databaseId,
-      appwriteConfig.postCollectionId,
-      [
+    if (!searchTerm) {
+      if (activeCategory && activeCategory !== "") {
+        // Find the main category and its subcategories
+        const mainCategory = mainCategories.find((cat: { name: string; subcategories: string[] }) => cat.name === activeCategory);
+        if (mainCategory) {
+          // Add category filter to the beginning of queries
+          queries.unshift(
+            Query.or(
+              mainCategory.subcategories.map((subcat: string) => 
+                Query.equal("category", subcat)
+              )
+            )
+          );
+        }
+      }
+    } else {
+      const searchTermArray = [searchTerm.toLowerCase(), searchTerm.toUpperCase(), searchTerm.charAt(0).toUpperCase() + searchTerm.slice(1)];
+      queries.unshift(
         Query.or([
           Query.contains("caption", searchTermArray),
           Query.contains("tags", searchTermArray),
           Query.contains("location", searchTermArray),
           Query.contains("category", searchTermArray),
         ])
-      ]
+      );
+    }
+
+    console.log('Executing search with queries:', JSON.stringify(queries, null, 2));
+
+    const posts = await databases.listDocuments(
+      appwriteConfig.databaseId,
+      appwriteConfig.postCollectionId,
+      queries
     );
 
-    if (!posts) throw Error;
+    if (!posts) {
+      console.log('No posts returned from database');
+      return { documents: [], total: 0 } as Models.DocumentList<Models.Document>;
+    }
 
+    console.log(`Search returned ${posts.documents.length} results`);
     return posts;
   } catch (error) {
-    console.log(error);
+    console.error('Search error:', error);
+    // Return empty result instead of throwing
+    return { documents: [], total: 0 } as Models.DocumentList<Models.Document>;
   }
 }
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export async function getInfinitePosts({ pageParam = 0 }: { pageParam?: any }): Promise<Page> {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const queries: any[] = [Query.orderDesc("$updatedAt"), Query.limit(9)];
+  const queries: any[] = [
+    Query.orderAsc("order"),  // Sort by order field first
+    Query.orderDesc("$updatedAt"),  // Then by updatedAt
+    Query.limit(9)
+  ];
   if (pageParam) {
       queries.push(Query.cursorAfter(pageParam.toString()));
   }
@@ -317,6 +392,8 @@ export async function updatePost(post: IUpdatePost) {
         tags: tags,
         order: post.order,
         content: post.content,
+        category: post.category,
+        shopifyProductId: post.shopifyProductId || null,
       }
     );
 
@@ -581,6 +658,30 @@ export async function searchPostsGraphql(searchTerm: string) {
     return response;
   } catch (error) {
     console.error("GraphQL query error:", error);
+    throw error;
+  }
+}
+
+// Add new function for video processing
+export async function processVideo(file: File, settings: GifSettings) {
+  try {
+    const formData = new FormData();
+    formData.append('video', file);
+    formData.append('settings', JSON.stringify(settings));
+
+    const response = await fetch('/api/video/process', {
+      method: 'POST',
+      body: formData,
+    });
+
+    if (!response.ok) {
+      throw new Error('Failed to process video');
+    }
+
+    const job = await response.json();
+    return job;
+  } catch (error) {
+    console.error('Error processing video:', error);
     throw error;
   }
 }

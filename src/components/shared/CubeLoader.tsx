@@ -93,3 +93,10 @@ export const asciiFrame = () => {
   }
   return face.join("");
 };
+
+// Default export for backward compatibility
+const CubeLoader = () => {
+  return asciiFrame();
+};
+
+export default CubeLoader;

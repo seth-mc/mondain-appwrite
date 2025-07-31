@@ -27,7 +27,7 @@ import { useUserContext } from "@/context/AuthContext";
 import { Loader } from "@/components/shared";
 import { useCreatePost, useUpdatePost } from "@/lib/react-query/queries";
 import { categories } from "@/constants";
-import { useState } from "react";
+import { useState, useCallback } from "react";
 
 
 type PostFormValues = z.infer<typeof PostValidation>;
@@ -37,37 +37,103 @@ type PostFormProps = {
   action: "Create" | "Update";
 };
 
+interface OrderedUrl {
+  url: string;
+  order: number;
+}
+
 const PostForm = ({ post, action }: PostFormProps) => {
   const navigate = useNavigate();
   const { toast } = useToast();
   const { user } = useUserContext();
-  const [uploadedFileUrls, setUploadedFileUrls] = useState<string[]>(post?.imageUrls || []);
+  const [uploadedFileUrls, setUploadedFileUrls] = useState<OrderedUrl[]>(
+    post?.imageUrls?.map((url: string, index: number) => ({ url, order: index })) || []
+  );
+  const [isUploading, setIsUploading] = useState(false);
 
   const form = useForm<PostFormValues>({
     resolver: zodResolver(PostValidation),
     defaultValues: {
       caption: post?.caption || "",
       imageUrls: post?.imageUrls || [],
+      videoUrl: post?.videoUrl || "",
+      thumbnailUrl: post?.thumbnailUrl || "",
+      mediaType: post?.mediaType || "image",
       location: post?.location || "",
       tags: post?.tags?.join(",") || "",
       category: post?.category || "",
+      shopifyProductId: post?.shopifyProductId || "",
     },
   });
 
-  const handleUploadComplete = (urls: string[]) => {
+  const handleUploadComplete = useCallback((urls: string[]) => {
+    if (isUploading) return; // Prevent duplicate uploads
+    
     console.log("handleUploadComplete called in PostForm with urls:", urls);
-    setUploadedFileUrls(urls);
-    form.setValue('imageUrls', urls);
+    setIsUploading(true);
+    
+    try {
+      // Check if the uploaded file is a video
+      const isVideo = urls.some(url => url.includes('.mp4') || url.includes('.mov') || url.includes('.webm'));
+      
+      if (isVideo) {
+        const videoUrl = urls.find(url => !url.includes('.gif'));
+        const thumbnailUrl = urls.find(url => url.includes('.gif'));
+        
+        form.setValue('videoUrl', videoUrl || '');
+        form.setValue('thumbnailUrl', thumbnailUrl || '');
+        form.setValue('mediaType', 'video');
+        form.setValue('imageUrls', []);
+      } else {
+        // Create ordered array of URLs with their positions
+        const orderedUrls: OrderedUrl[] = urls.map((url, index) => ({
+          url,
+          order: index
+        }));
+        
+        setUploadedFileUrls(orderedUrls);
+        form.setValue('imageUrls', urls);
+        form.setValue('mediaType', 'image');
+        form.setValue('videoUrl', '');
+        form.setValue('thumbnailUrl', '');
+
+        // Analyze the first image for tags and category
+        if (urls.length > 0) {
+          analyzeImage(urls[0]);
+        }
+      }
+    } finally {
+      setIsUploading(false);
+    }
+  }, [form, isUploading]);
+
+  // Move analyzeImage outside the handleUploadComplete function
+  const analyzeImage = async (imageUrl: string) => {
+    try {
+      const response = await fetch('http://localhost:3001/api/image/analyze', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ imageUrl }),
+      });
+      
+      const data = await response.json();
+      
+      // Auto-fill the form fields with only the data we receive
+      form.setValue('tags', data.tags.join(', '));
+      form.setValue('caption', data.caption);
+    } catch (error) {
+      console.error('Error analyzing image:', error);
+    }
   };
 
   const S3ooshConfig = {
     maxTotalFiles: 10,
-    maxSize: 10485760,
+    maxSize: 104857600,
     acceptedFileTypes: {
       "image/*": [".png", ".jpg", ".jpeg", ".gif"],
-      "application/pdf": [".pdf"],
-      "audio/*": [".mp3", ".wav", ".ogg"],
-      "video/*": [".mp4", ".mov", ".avi", ".mkv"],
+      "video/*": [".mp4", ".mov", ".avi", ".mkv", ".webm", ".quicktime"],
     },
   };
 
@@ -75,13 +141,18 @@ const PostForm = ({ post, action }: PostFormProps) => {
   const { mutateAsync: updatePost, isPending: isPendingUpdate } = useUpdatePost();
 
   const handleSubmit = async (values: PostFormValues) => {
+    if (isUploading) {
+      toast({ title: "Please wait for the upload to complete", variant: "destructive" });
+      return;
+    }
+
     try {
       if (action === "Update" && post) {
         const updatedPost = await updatePost({
           ...values,
           postId: post.$id,
           imageIds: post.imageId,
-          imageUrls: uploadedFileUrls, // Use the new URLs for update
+          imageUrls: uploadedFileUrls.map(item => item.url),
         });
 
         if (updatedPost) {
@@ -89,25 +160,64 @@ const PostForm = ({ post, action }: PostFormProps) => {
           navigate(`/posts/${post.$id}`);
         }
       } else {
-        const newPost = await createPost({
-          ...values,
+        // Get the first image URL
+        const firstImageUrl = uploadedFileUrls[0]?.url;
+        if (!firstImageUrl) {
+          toast({ title: "Please upload at least one image", variant: "destructive" });
+          return;
+        }
+
+        console.log("Submitting post with values:", {
           userId: user.id,
-          imageUrls: uploadedFileUrls,
+          caption: values.caption,
+          location: values.location,
+          tags: values.tags,
+          mediaType: values.mediaType,
+          thumbnailUrl: values.thumbnailUrl,
+          imageUrls: uploadedFileUrls.map(item => item.url),
+          category: values.category
+        });
+
+        const newPost = await createPost({
+          userId: user.id,
+          caption: values.caption,
+          location: values.location,
+          tags: values.tags,
+          mediaType: values.mediaType,
+          thumbnailUrl: values.thumbnailUrl,
+          imageUrls: uploadedFileUrls.map(item => item.url),
+          category: values.category,
+          shopifyProductId: values.shopifyProductId
         });
 
         if (newPost) {
           toast({ title: "Post created successfully" });
           navigate("/");
+        } else {
+          toast({ title: "Failed to create post", variant: "destructive" });
         }
       }
     } catch (error) {
+      console.error("Error submitting post:", error);
       toast({ title: `Failed to ${action.toLowerCase()} post. Please try again.`, variant: "destructive" });
     }
   };
 
+
+
   return (
     <Form {...form}>
-      <form onSubmit={form.handleSubmit(handleSubmit)} className="flex flex-col gap-9 w-full max-w-5xl">
+      <form 
+        onSubmit={(e) => {
+          e.preventDefault();
+          console.log("Form submitted");
+          form.handleSubmit((values) => {
+            console.log("Form values:", values);
+            handleSubmit(values);
+          })(e);
+        }} 
+        className="flex flex-col gap-9 w-full max-w-5xl"
+      >
         {/* Caption Field */}
         <FormField
           control={form.control}
@@ -196,6 +306,31 @@ const PostForm = ({ post, action }: PostFormProps) => {
             </FormItem>
           )}
         />
+
+        {/* Shopify Product ID Field - Only for Admins */}
+        {user.admin && (
+          <FormField
+            control={form.control}
+            name="shopifyProductId"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel className="shad-form_label">Shopify Product ID (Optional)</FormLabel>
+                <FormControl>
+                  <Input 
+                    type="text" 
+                    className="shad-input" 
+                    placeholder="Enter Shopify product handle or ID"
+                    {...field} 
+                  />
+                </FormControl>
+                <FormMessage className="shad-form_message" />
+                <p className="text-xs text-gray-500 mt-1">
+                  Connect this post to a Shopify product to enable purchasing
+                </p>
+              </FormItem>
+            )}
+          />
+        )}
 
         {/* Submit and Cancel Buttons */}
         <div className="flex gap-4 items-center justify-end">

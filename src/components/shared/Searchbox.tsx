@@ -16,7 +16,7 @@ const Searchbox = () => {
           placeholder="Search"
           value={searchValue}
           onFocus={() => navigate('/search')}
-          className="d p-2 w-full bg-light-1 outline-none font-spacemono"
+          className="d p-2 w-full bg-light-1 outline-none font-times"
         />
       </div>
     </div>

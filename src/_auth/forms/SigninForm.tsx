@@ -30,35 +30,35 @@ const SigninForm = ({ darkMode }: DarkModeProps) => {
   });
 
   const handleSignin = async (user: z.infer<typeof SigninValidation>) => {
-    const session = await signInAccount(user);
+    try {
+      const session = await signInAccount(user);
 
-    if (!session) {
-      toast({ title: "Login failed. Please try again." });
-      
-      return;
-    }
+      if (!session) {
+        toast({ title: "Login failed. Please try again." });
+        return;
+      }
 
-    const isLoggedIn = await checkAuthUser();
+      const isLoggedIn = await checkAuthUser();
 
-    if (isLoggedIn) {
-      form.reset();
-
-
-  
-      // Check if the user has the "admin" label
-  
-      // Navigate to the appropriate page
-      navigate("/");
-    } else {
-      toast({ title: "Login failed. Please try again.", });
-      return;
+      if (isLoggedIn) {
+        form.reset();
+        navigate("/");
+      } else {
+        toast({ title: "Login failed. Please try again." });
+      }
+    } catch (error) {
+      console.error("SignIn Error:", error);
+      toast({ 
+        title: "Login failed", 
+        description: error instanceof Error ? error.message : "Please check your credentials and try again."
+      });
     }
   };
 
   return (
     <Form {...form}>
       <div className="sm:w-420 flex-center flex-col">
-        <img className={`d cursor-pointer w-52 ${darkMode ? 'invert' : ''}`} src="/assets/images/logo-black.svg" alt="logo" />
+        <img className={`d cursor-pointer w-52 ${darkMode ? 'invert' : ''}`}  src="/assets/icons/mondain-porti.gif" alt="logo" />
 
         <h2 className="h3-bold md:h2-bold pt-5 sm:pt-12">
           Log in to your account

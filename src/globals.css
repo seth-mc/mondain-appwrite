@@ -1,6 +1,7 @@
 @import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap");
 @import url('https://fonts.googleapis.com/css2?family=Space+Mono&display=swap');
-
+@import url('https://fonts.googleapis.com/css2?family=Times+New+Roman&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Courier+Prime:ital,wght@0,400;0,700;1,400;1,700&display=swap');
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -39,7 +40,7 @@ html {
     --dark-1: #FFFFFF;
     --dark-2: #EFEFEF;
     --dark-3: #DBDBDB;
-    --dark-4: #5C5C7B;
+    --dark-4: #C2C2C2;
     --light-1: #000000;
     --light-2: #09090A;
     --light-3: #DBDBDB;
@@ -107,6 +108,27 @@ html {
 
   .tiny-medium {
     @apply text-[10px] font-medium leading-[140%];
+  }
+
+  /* CONTACT PAGE TYPOGRAPHY */
+  .contact-heading {
+    @apply text-4xl md:text-6xl font-bold tracking-[0.2em] uppercase;
+  }
+
+  .contact-label {
+    @apply text-sm font-medium tracking-[0.15em] uppercase;
+  }
+
+  .contact-email {
+    @apply text-xl md:text-2xl font-bold tracking-[0.1em] uppercase;
+  }
+
+  .agency-nav {
+    @apply text-sm font-medium tracking-[0.12em] uppercase;
+  }
+
+  .slot-machine-container {
+    @apply overflow-hidden relative;
   }
 
   /* UTILITIES */
@@ -288,7 +310,7 @@ html {
   /* SHADCN COMPONENTS */
   /* Form */
   .shad-form_label {
-    @apply text-light-4 !important;
+    @apply text-dark-1 !important;
   }
 
   .shad-calendar {
@@ -372,6 +394,23 @@ opacity: 50%;
 transform: scale(0.25);
 }
 
+
+.progress-bar-container {
+  width: 100%;
+  height: 4px;
+  background-color: var(--dark-4);
+  cursor: pointer;
+  margin: 10px 0;
+  border-radius: 2px;
+}
+
+.progress-bar {
+  height: 100%;
+  background-color: var(--red);
+  border-radius: 2px;
+  transition: width 0.1s linear;
+}
+
 .musical-note {
   margin-block-start: 4.3em;
 }
@@ -410,6 +449,7 @@ iframe.sc-widget {
 }
 
 .player-container {
+  font-family: 'Space Mono';
   border: 2px solid var(--dark-1);
 }
 
@@ -444,7 +484,7 @@ iframe.sc-widget {
 
 
 .sidenav {
-  font-family: 'Space Mono';
+  font-family: 'Times New Roman';
   box-sizing: border-box;
   position: relative;
   display: inline-block;
@@ -619,11 +659,11 @@ iframe.sc-widget {
 }
 
 code {
-  font-family: 'Space Mono';
+  font-family: 'Times New Roman';
 }
 
 .loading {
-  font-family: 'Space Mono';
+  font-family: 'Times New Roman';
 }
 
 .container {
@@ -634,14 +674,15 @@ code {
 }
 
 .cube {
-text-align: center;
-padding: 20px;
-margin: 50px;
-position: center;
-font-family: 'Space Mono';
-/*word-wrap: break-word;
-white-space: pre-wrap;
-word-break: break-word; */
-color: var(--dark-4); 
-font-size: 10pt;
+  text-align: center;
+  padding: 20px;
+  padding-top: 25%;
+  margin: 50px;
+  position: center;
+  font-family: 'Courier New', monospace;
+  white-space: pre;
+  line-height: 1.5;
+  letter-spacing: 0;
+  color: var(--dark-4); 
+  font-size: clamp(8px, 1.5vw, 12px);
 }
