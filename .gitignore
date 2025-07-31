@@ -9,6 +9,12 @@ lerna-debug.log*
 
 # Uploads
 uploads/
+server/uploads/
+
+# Large media files
+*.gif
+public/assets/images/side-img.svg
+public/assets/icons/*.gif
 
 node_modules
 dist
