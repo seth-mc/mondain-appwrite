@@ -64,7 +64,7 @@ const ProfileDropdown = ({ isAdmin, darkMode, toggleDarkMode }: { isAdmin?: bool
             whileTap={{ scale: 0.90 }}
             onClick={() => setIsOpen(!isOpen)}
           >
-            <img src={user?.email ? user.imageUrl : "/assets/icons/m-profile.gif"} alt="profile" className={`d w-[32px] border border-1 border-dark-2 ${darkMode ? 'invert' : ''}`} />
+            <img src={user?.email ? user.imageUrl : "https://mondain-presigned-media.s3.us-east-2.amazonaws.com/uploads/dd9e2b03-0f66-4e49-ab7e-7d842af89384.gif"} alt="profile" className={`d w-[32px] border border-1 border-dark-2 ${darkMode ? 'invert' : ''}`} />
           </motion.button>
           <motion.ul
             className="absolute d !z-20 right-0 top-0 mt-20 mr-2 bg-light-1 border-dark-1 shadow-lg overflow-hidden"

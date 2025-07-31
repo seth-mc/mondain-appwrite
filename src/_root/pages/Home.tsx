@@ -140,7 +140,7 @@ const Home = ({ darkMode, isAdmin, toggleDarkMode }: DarkModeProps) => {
               >
                 <div className="h-screen w-auto">
                   <img
-                    src="/assets/icons/mondain-porti.gif"
+                    src="https://mondain-presigned-media.s3.us-east-2.amazonaws.com/uploads/c44f903e-5a3a-473d-814b-b5fd2cb856c1.gif"
                     alt="Logo"
                     className={`!max-w-none h-full w-auto object-contain cursor-pointer ${darkMode ? 'invert' : ''}`}
                   />
@@ -149,7 +149,7 @@ const Home = ({ darkMode, isAdmin, toggleDarkMode }: DarkModeProps) => {
             )}
             <div className="relative">
               <img
-                src="/assets/icons/mondain-porti.gif"
+                src="https://mondain-presigned-media.s3.us-east-2.amazonaws.com/uploads/c44f903e-5a3a-473d-814b-b5fd2cb856c1.gif"
                 alt="Logo"
                 className={`w-[800px] pt-16 mb-8 cursor-pointer ${darkMode ? 'invert' : ''}`}
                 onClick={handleLogoClick}

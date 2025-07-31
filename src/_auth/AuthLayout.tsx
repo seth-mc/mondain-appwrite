@@ -9,7 +9,7 @@ export default function AuthLayout() {
       </section>
 
       <img
-        src="/assets/images/side-img.svg"
+        src="https://mondain-presigned-media.s3.us-east-2.amazonaws.com/uploads/95b9396b-9197-48ef-997e-c72c774948d5.svg"
         alt="logo"
         className="hidden xl:block h-screen w-1/2 object-cover bg-no-repeat"
       />

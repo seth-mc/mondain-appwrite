@@ -56,7 +56,7 @@ const Shop = ({ darkMode, isAdmin, toggleDarkMode }: DarkModeProps) => {
           <div className="flex flex-col items-center mb-12">
             <div className="relative">
               <img
-                src="/assets/icons/mondain-porti.gif"
+                src="https://mondain-presigned-media.s3.us-east-2.amazonaws.com/uploads/c44f903e-5a3a-473d-814b-b5fd2cb856c1.gif"
                 alt="Logo"
                 className={`w-[400px] pt-8 mb-6 ${darkMode ? 'invert' : ''}`}
               />
