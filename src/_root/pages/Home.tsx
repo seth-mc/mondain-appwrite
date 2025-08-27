@@ -165,8 +165,8 @@ const Home = ({ darkMode, isAdmin, toggleDarkMode }: DarkModeProps) => {
                 ease: [0.4, 0, 0.2, 1]
               }}
             >
-              <div className="rounded-md flex items-center min-w-[500px] w-full px-4 py-2 bg-light-1 border border-dark-4 focus-within:shadow-sm">
-                <Search className="w-5 h-5 text-dark-3 "/>
+              <div className="rounded-md flex items-center md:min-w-[500px] w-full x-4 py-2 bg-light-1 border border-dark-4 focus-within:shadow-sm">
+                <Search className="mx-4 w-5 h-5 text-dark-3 "/>
                 <input
                   type="text"
                   onChange={(e) => {

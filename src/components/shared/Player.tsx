@@ -62,33 +62,47 @@ const PlayerComponent: React.FC<PlayerComponentProps> = ({
     const iconClass = darkMode ? 'invert' : '';
 
     const loadSoundCloudAPI = useCallback(() => {
-        return new Promise<void>((resolve) => {
-            if (window.SC) {
-                console.log("SoundCloud API already loaded");
-                resolve();
-            } else {
-                const script = document.createElement("script");
-                script.src = "https://w.soundcloud.com/player/api.js";
-                script.async = true;
-                script.onload = () => {
-                    console.log("SoundCloud API loaded");
+        return new Promise<void>((resolve, reject) => {
+            try {
+                if (window.SC) {
+                    console.log("SoundCloud API already loaded");
                     resolve();
-                };
-                document.body.appendChild(script);
+                } else {
+                    const script = document.createElement("script");
+                    script.src = "https://w.soundcloud.com/player/api.js";
+                    script.async = true;
+                    script.onload = () => {
+                        console.log("SoundCloud API loaded");
+                        resolve();
+                    };
+                    script.onerror = (error) => {
+                        console.error("Failed to load SoundCloud API:", error);
+                        reject(new Error("Failed to load SoundCloud API"));
+                    };
+                    document.body.appendChild(script);
+                }
+            } catch (error) {
+                console.error("Error loading SoundCloud API:", error);
+                reject(error);
             }
         });
     }, []);
 
     const initializeWidget = useCallback(() => {
-        if (!iframeRef.current || !window.SC) {
-            console.log("iframe or SC not found");
+        try {
+            if (!iframeRef.current || !window.SC) {
+                console.log("iframe or SC not found");
+                return false;
+            }
+
+            console.log("Initializing widget");
+            widgetRef.current = window.SC.Widget(iframeRef.current);
+            widgetRef.current.bind(window.SC.Widget.Events.READY, onWidgetReady);
+            return true;
+        } catch (error) {
+            console.error("Error initializing SoundCloud widget:", error);
             return false;
         }
-
-        console.log("Initializing widget");
-        widgetRef.current = window.SC.Widget(iframeRef.current);
-        widgetRef.current.bind(window.SC.Widget.Events.READY, onWidgetReady);
-        return true;
     }, []);
 
     const onWidgetReady = useCallback(() => {
@@ -140,30 +154,35 @@ const PlayerComponent: React.FC<PlayerComponentProps> = ({
 
     useEffect(() => {
         const initializePlayer = async () => {
-            await loadSoundCloudAPI();
-            let retries = 0;
-            const maxRetries = 5;
-            const retryInterval = 1000; // 1 second
+            try {
+                await loadSoundCloudAPI();
+                let retries = 0;
+                const maxRetries = 5;
+                const retryInterval = 1000; // 1 second
 
-            const tryInitialize = () => {
-                if (initializeWidget()) {
-                    console.log("Widget initialized successfully");
-                } else {
-                    retries++;
-                    if (retries < maxRetries) {
-                        console.log(`Retrying initialization (${retries}/${maxRetries})`);
-                        setTimeout(tryInitialize, retryInterval);
+                const tryInitialize = () => {
+                    if (initializeWidget()) {
+                        console.log("Widget initialized successfully");
                     } else {
-                        console.error("Failed to initialize widget after max retries");
-                        setState(prev => ({ ...prev, isLoading: false, playertitle: "Failed to load player" }));
-                    }
+                        retries++;
+                        if (retries < maxRetries) {
+                            console.log(`Retrying initialization (${retries}/${maxRetries})`);
+                            setTimeout(tryInitialize, retryInterval);
+                        } else {
+                            console.error("Failed to initialize widget after max retries");
+                            setState(prev => ({ ...prev, isLoading: false, playertitle: "Failed to load player" }));
+                        }
                 }
             };
 
             tryInitialize();
-        };
+        } catch (error) {
+            console.error("Error initializing player:", error);
+            setState(prev => ({ ...prev, isLoading: false, playertitle: "Failed to load player" }));
+        }
+    };
 
-        initializePlayer();
+    initializePlayer();
 
         return () => {
             if (widgetRef.current) {
