@@ -56,15 +56,7 @@ export const categories = [
 ];
 
 export const mainCategories = [
-  {
-    name: 'THINGS',
-    subcategories: [
-      'nature', 'city', 'architecture', 'art',
-      'fitness', 'clothing', 'celebs', 'posters', 'houses + rooms',
-      'ps', 'mixed media', 'car', 'active',
-      'history'
-    ]
-  },
+
   {
     name: 'MONDAIN',
     subcategories: ['mondain', 'mondain home']
@@ -80,5 +72,14 @@ export const mainCategories = [
   {
     name: 'TEXT',
     subcategories: ['quote', 'inspiration']
+  },
+  {
+    name: 'SCRAPBOOK',
+    subcategories: [
+      'nature', 'city', 'architecture', 'art',
+      'fitness', 'clothing', 'celebs', 'posters', 'houses + rooms',
+      'ps', 'mixed media', 'car', 'active',
+      'history'
+    ]
   },
 ];
