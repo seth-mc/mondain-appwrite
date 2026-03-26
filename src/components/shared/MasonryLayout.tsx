@@ -28,8 +28,8 @@ const breakpointColumnsObj = {
   3000: 4,
   2000: 3,
   1200: 3,
-  1000: 3,
-  500: 3,
+  1000: 2,
+  500: 2,
 };
 
 const MasonryLayout = ({ newToSite, posts, isAdmin = true }: PostsProps) => {
