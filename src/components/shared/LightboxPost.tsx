@@ -190,10 +190,10 @@ const LightboxPost = ({
     if (!post?.shopifyProductId) return;
     try {
       const handle = await getProductHandle(post.shopifyProductId);
-      window.location.href = `https://mondain.page/products/${handle || post.shopifyProductId}`;
+      window.open(`https://mondain.page/products/${handle || post.shopifyProductId}`, '_blank');
     } catch (err) {
       console.error('Redirect failed:', err);
-      window.location.href = `https://mondain.page/products/${post.shopifyProductId}`;
+      window.open(`https://mondain.page/products/${post.shopifyProductId}`, '_blank');
     }
   };
 

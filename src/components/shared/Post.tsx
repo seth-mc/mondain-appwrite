@@ -78,10 +78,10 @@ const Post = ({ post, dragHandleProps, isAdmin, delay = 0, isSelected = false }:
     if (!hasShopifyProduct) return;
     try {
       const handle = await getProductHandle(shopifyProductId);
-      window.location.href = `https://mondain.page/products/${handle || shopifyProductId}`;
+      window.open(`https://mondain.page/products/${handle || shopifyProductId}`, '_blank');
     } catch (err) {
       console.error('Redirect failed:', err);
-      window.location.href = `https://mondain.page/products/${shopifyProductId}`;
+      window.open(`https://mondain.page/products/${shopifyProductId}`, '_blank');
     }
   };
 
