@@ -28,6 +28,7 @@ import { Loader } from "@/components/shared";
 import { useCreatePost, useUpdatePost } from "@/lib/react-query/queries";
 import { categories } from "@/constants";
 import { useState, useCallback } from "react";
+import { getProductHandle } from "@/lib/shopify";
 
 
 type PostFormValues = z.infer<typeof PostValidation>;
@@ -147,9 +148,15 @@ const PostForm = ({ post, action }: PostFormProps) => {
     }
 
     try {
+      // Get the Shopify handle if it's an ID
+      let shopifyProductId = values.shopifyProductId;
+      if (shopifyProductId) {
+        shopifyProductId = await getProductHandle(shopifyProductId) || shopifyProductId;
+      }
       if (action === "Update" && post) {
         const updatedPost = await updatePost({
           ...values,
+          shopifyProductId: shopifyProductId,
           postId: post.$id,
           imageIds: post.imageId,
           imageUrls: uploadedFileUrls.map(item => item.url),
@@ -187,7 +194,7 @@ const PostForm = ({ post, action }: PostFormProps) => {
           thumbnailUrl: values.thumbnailUrl,
           imageUrls: uploadedFileUrls.map(item => item.url),
           category: values.category,
-          shopifyProductId: values.shopifyProductId
+          shopifyProductId: shopifyProductId
         });
 
         if (newPost) {

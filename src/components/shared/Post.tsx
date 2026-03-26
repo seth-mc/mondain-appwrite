@@ -4,6 +4,7 @@ import { motion } from 'framer-motion';
 import { GripVertical, ShoppingCart } from 'lucide-react';
 import { DraggableProvidedDragHandleProps } from '@hello-pangea/dnd';
 import { useDeletePostFull } from '@/lib/react-query/queries';
+import { getProductHandle } from '@/lib/shopify';
 
 type PostProps = {
   post: Models.Document;
@@ -25,15 +26,6 @@ const Post = ({ post, dragHandleProps, isAdmin, delay = 0, isSelected = false }:
   const { imageUrls, thumbnailUrl, shopifyProductId } = post;
   const hasShopifyProduct = shopifyProductId && shopifyProductId.trim() !== '';
 
-  // Load Shopify Web Components script if this post has a product
-  useEffect(() => {
-    if (hasShopifyProduct && !document.querySelector('script[src*="storefront/web-components"]')) {
-      const script = document.createElement('script');
-      script.type = 'module';
-      script.src = 'https://cdn.shopify.com/storefront/web-components.js';
-      document.head.appendChild(script);
-    }
-  }, [hasShopifyProduct]);
 
   // Dismiss context menu on outside click
   useEffect(() => {
@@ -80,12 +72,17 @@ const Post = ({ post, dragHandleProps, isAdmin, delay = 0, isSelected = false }:
       document.dispatchEvent(customEvent);
     }
   };
-  const handleBuyClick = (e: React.MouseEvent) => {
+  const handleBuyClick = async (e: React.MouseEvent) => {
     e.stopPropagation();
     e.preventDefault();
     if (!hasShopifyProduct) return;
-    const modal = document.getElementById(`product-modal-${post.$id}`) as HTMLDialogElement;
-    if (modal) modal.showModal();
+    try {
+      const handle = await getProductHandle(shopifyProductId);
+      window.location.href = `https://mondain.page/products/${handle || shopifyProductId}`;
+    } catch (err) {
+      console.error('Redirect failed:', err);
+      window.location.href = `https://mondain.page/products/${shopifyProductId}`;
+    }
   };
 
   return (
@@ -267,50 +264,6 @@ const Post = ({ post, dragHandleProps, isAdmin, delay = 0, isSelected = false }:
         `
       }} />
 
-      {/* Embedded Product Modal for Shoppable Posts */}
-      {!isQuote && hasShopifyProduct && (
-        <dialog id={`product-modal-${post.$id}`} className="product-modal z-50">
-          {/* @ts-expect-error - custom shopify attribute */}
-          <shopify-context type="product" gid={`gid://shopify/Product/${shopifyProductId}`}>
-            {/* dangerouslySetInnerHTML on <template> correctly populates its content fragment,
-                which is required for Shopify Web Components to recognise their context */}
-            {/* @ts-expect-error - template dangerouslySetInnerHTML is required for Shopify Web Components */}
-            <template dangerouslySetInnerHTML={{ __html: `
-              <div class="modal-container">
-                <div class="modal-close-container">
-                  <button class="modal-close-btn" onclick="document.getElementById('product-modal-${post.$id}').close()">✕</button>
-                </div>
-                <div class="modal-content">
-                  <div class="modal-layout">
-                    <div class="modal-media">
-                      <shopify-media width="500" height="500" query="product.selectedOrFirstAvailableVariant.image" class="modal-image"></shopify-media>
-                    </div>
-                    <div class="modal-details">
-                      <div class="modal-header">
-                        <span class="modal-vendor"><shopify-data query="product.vendor"></shopify-data></span>
-                        <h1 class="modal-title font-times"><shopify-data query="product.title"></shopify-data></h1>
-                        <div class="modal-price font-space"><shopify-money query="product.selectedOrFirstAvailableVariant.price"></shopify-money></div>
-                      </div>
-                      <div class="modal-buttons font-courier">
-                        <button class="modal-add-btn" shopify-attr--disabled="!product.selectedOrFirstAvailableVariant.availableForSale"
-                          onclick="(function(btn){var cart=document.getElementById('global-cart');var modal=document.getElementById('product-modal-${post.$id}');if(cart&&cart.addLine){cart.addLine(btn).then(function(){cart.showModal();if(modal)modal.close();})}})(this)">Add to Cart</button>
-                        <button class="modal-buy-btn" shopify-attr--disabled="!product.selectedOrFirstAvailableVariant.availableForSale"
-                          onclick="(function(btn){var store=document.querySelector('shopify-store');if(store&&store.buyNow)store.buyNow(btn)})(this)">Buy Now</button>
-                      </div>
-                      <div class="modal-description font-courier text-sm">
-                        <shopify-data query="product.descriptionHtml"></shopify-data>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            ` }} />
-            <div shopify-loading-placeholder="" className="modal-loading font-courier">
-              <p>Loading product details...</p>
-            </div>
-          </shopify-context>
-        </dialog>
-      )}
     </motion.div>
 
       {/* Right-click context menu */}

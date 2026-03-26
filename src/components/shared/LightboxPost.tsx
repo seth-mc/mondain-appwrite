@@ -1,8 +1,10 @@
 import React, { useEffect, useState, useRef, useCallback } from 'react';
 import { Models } from 'appwrite';
 import { motion, AnimatePresence } from 'framer-motion';
+import { ShoppingCart } from 'lucide-react';
 import { appwriteConfig, databases } from '@/lib/appwrite/config';
 import { useUpdatePost } from '@/lib/react-query/queries';
+import { getProductHandle } from '@/lib/shopify';
 
 type LightboxPostProps = {
   postId: string;
@@ -180,6 +182,19 @@ const LightboxPost = ({
     }
     setNewTagInput('');
     setShowTagInput(false);
+  };
+ 
+  const handleBuyClick = async (e: React.MouseEvent) => {
+    e.stopPropagation();
+    e.preventDefault();
+    if (!post?.shopifyProductId) return;
+    try {
+      const handle = await getProductHandle(post.shopifyProductId);
+      window.location.href = `https://mondain.page/products/${handle || post.shopifyProductId}`;
+    } catch (err) {
+      console.error('Redirect failed:', err);
+      window.location.href = `https://mondain.page/products/${post.shopifyProductId}`;
+    }
   };
 
   const removeTag = (tag: string) => {
@@ -493,7 +508,15 @@ const LightboxPost = ({
               {isSaving && (
                 <span className="text-xs text-gray-400 mr-auto font-space-mono">saving…</span>
               )}
-              {!isQuote && <a
+              {post.shopifyProductId && (
+                <button
+                  onClick={handleBuyClick}
+                  className={`${isSaving ? '' : 'mr-auto'} flex items-center gap-2 px-4 py-2 bg-black text-white text-[10px] font-bold tracking-widest uppercase rounded-full hover:bg-gray-800 transition shadow-sm hover:shadow-md`}
+                >
+                  <ShoppingCart size={14} /> Buy Now
+                </button>
+              )}
+              {isAdmin && !isQuote && <a
                 href={displayImage}
                 download
                 className="w-8 h-8 flex items-center justify-center rounded-full border border-gray-200 bg-white hover:bg-gray-50 text-gray-400 hover:text-gray-600 transition"

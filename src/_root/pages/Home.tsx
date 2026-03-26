@@ -243,7 +243,7 @@ const Home = ({ darkMode, isAdmin }: DarkModeProps) => {
                   transition={{ duration: 0.28, ease: [0.4, 0, 0.2, 1] }}
                   className="overflow-hidden"
                 >
-                  <nav className="flex items-center gap-x-6 gap-y-2 flex-wrap py-3 pb-4">
+                  <nav className="flex items-center justify-center gap-x-6 gap-y-2 flex-wrap py-3 pb-4">
                     {navCategories.map((category, i) => (
                       <motion.button
                         key={category.name}
