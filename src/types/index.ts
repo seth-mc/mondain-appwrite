@@ -63,7 +63,7 @@ export type INewUser = {
 
 export type SearchResultProps = {
   isSearchFetching: boolean;
-  searchedPosts: Models.Document[];
+  searchedPosts: Models.Document[] | { documents: Models.Document[] };
 };
 
 export type DarkModeProps = {

@@ -2,12 +2,13 @@ import React, { useEffect, useRef, useState } from 'react';
 import { Models } from 'appwrite';
 import { motion } from 'framer-motion';
 import { GripVertical, ShoppingCart } from 'lucide-react';
+import { DraggableProvidedDragHandleProps } from '@hello-pangea/dnd';
 import { useDeletePostFull } from '@/lib/react-query/queries';
 
 type PostProps = {
   post: Models.Document;
   newToSite?: boolean;
-  dragHandleProps?: Record<string, unknown>;
+  dragHandleProps?: DraggableProvidedDragHandleProps | null;
   isAdmin?: boolean;
   delay?: number;
   isSelected?: boolean;

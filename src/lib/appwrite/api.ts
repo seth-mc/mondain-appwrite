@@ -325,7 +325,7 @@ export async function searchPosts(searchTerm: string, activeCategory?: string, p
   }
 }
 
-export async function getInfinitePosts({ pageParam = 0 }: { pageParam?: string | number }): Promise<Page> {
+export async function getInfinitePosts({ pageParam }: { pageParam: any }): Promise<Page> {
   const queries: string[] = [
     Query.orderDesc("$updatedAt"),
     Query.limit(30)
