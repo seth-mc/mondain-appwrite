@@ -267,7 +267,7 @@ export async function deleteFile(fileId: string) {
 // ============================== SEARCH POSTS
 export async function searchPosts(searchTerm: string, activeCategory?: string, pageParam?: string): Promise<Models.DocumentList<Models.Document>> {
   try {
-    const queries: any[] = [
+    const queries: string[] = [
       Query.orderDesc("$createdAt"),
       Query.limit(9)
     ];
@@ -325,10 +325,8 @@ export async function searchPosts(searchTerm: string, activeCategory?: string, p
   }
 }
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-export async function getInfinitePosts({ pageParam = 0 }: { pageParam?: any }): Promise<Page> {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const queries: any[] = [
+export async function getInfinitePosts({ pageParam = 0 }: { pageParam?: string | number }): Promise<Page> {
+  const queries: string[] = [
     Query.orderDesc("$updatedAt"),
     Query.limit(30)
   ];
@@ -535,8 +533,7 @@ export async function getRecentPosts() {
 
 // ============================== GET USERS
 export async function getUsers(limit?: number) {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const queries: any[] = [Query.orderDesc("$createdAt")];
+  const queries: string[] = [Query.orderDesc("$createdAt")];
 
   if (limit) {
     queries.push(Query.limit(limit));

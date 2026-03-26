@@ -28,8 +28,8 @@ export async function getFile(
 
   const createResponse = (
     status: number,
-    headers: any,
-    stream?: any,
+    headers: Record<string, string>,
+    stream?: ReadableStream | undefined,
     error?: string
   ) => ({
     status,

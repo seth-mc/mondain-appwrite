@@ -66,6 +66,27 @@ const PostForm = ({ post, action }: PostFormProps) => {
     },
   });
 
+  // Move analyzeImage outside the handleUploadComplete function
+  const analyzeImage = useCallback(async (imageUrl: string) => {
+    try {
+      const response = await fetch('http://localhost:3001/api/image/analyze', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ imageUrl }),
+      });
+      
+      const data = await response.json();
+      
+      // Auto-fill the form fields with only the data we receive
+      form.setValue('tags', data.tags.join(', '));
+      form.setValue('caption', data.caption);
+    } catch (error) {
+      console.error('Error analyzing image:', error);
+    }
+  }, [form]);
+
   const handleUploadComplete = useCallback((urls: string[]) => {
     if (isUploading) return; // Prevent duplicate uploads
     
@@ -105,28 +126,7 @@ const PostForm = ({ post, action }: PostFormProps) => {
     } finally {
       setIsUploading(false);
     }
-  }, [form, isUploading]);
-
-  // Move analyzeImage outside the handleUploadComplete function
-  const analyzeImage = async (imageUrl: string) => {
-    try {
-      const response = await fetch('http://localhost:3001/api/image/analyze', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ imageUrl }),
-      });
-      
-      const data = await response.json();
-      
-      // Auto-fill the form fields with only the data we receive
-      form.setValue('tags', data.tags.join(', '));
-      form.setValue('caption', data.caption);
-    } catch (error) {
-      console.error('Error analyzing image:', error);
-    }
-  };
+  }, [form, isUploading, analyzeImage]);
 
   const S3ooshConfig = {
     maxTotalFiles: 10,

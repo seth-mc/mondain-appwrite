@@ -3,10 +3,10 @@ import useDebounce from "@/hooks/useDebounce";
 import { Loader, MasonryLayout, SearchResults } from "@/components/shared";
 import { useGetPosts, useSearchPosts } from "@/lib/react-query/queries";
 import { mainCategories } from "@/constants";
-import { PostsQueryResult } from "@/types";
-import { DarkModeProps } from "@/types";
+import { PostsQueryResult, DarkModeProps } from "@/types";
 import { useUserContext } from "@/context/AuthContext";
 import { motion, AnimatePresence } from "framer-motion";
+import { Models } from "appwrite";
 
 const allCategory = { name: "ALL PINS", subcategories: [] };
 const navCategories = [allCategory, ...mainCategories];
@@ -21,19 +21,19 @@ const QUOTE_INTERVAL = 4;
 const textCategory = mainCategories.find(cat => cat.name === 'TEXT');
 const textSubcategories = new Set(textCategory?.subcategories ?? []);
 
-function isTextPost(post: any): boolean {
+function isTextPost(post: Models.Document): boolean {
   return (
     post.mediaType === 'quote' ||
     textSubcategories.has((post.category ?? '').toLowerCase())
   );
 }
 
-function interleavePosts(posts: any[]): any[] {
+function interleavePosts(posts: Models.Document[]): Models.Document[] {
   const textPosts = posts.filter(isTextPost);
   const regular = posts.filter(p => !isTextPost(p));
 
   // Build a bucket per non-TEXT main category + one for uncategorized
-  const buckets: Record<string, any[]> = {};
+  const buckets: Record<string, Models.Document[]> = {};
   mainCategories.forEach(cat => {
     if (cat.name !== 'TEXT') buckets[cat.name] = [];
   });
@@ -49,10 +49,10 @@ function interleavePosts(posts: any[]): any[] {
 
   // Round-robin pick one from each non-empty bucket in order
   const queues = Object.values(buckets).filter(q => q.length > 0);
-  const interleaved: any[] = [];
+  const interleaved: Models.Document[] = [];
   while (queues.some(q => q.length > 0)) {
     for (let i = queues.length - 1; i >= 0; i--) {
-      if (queues[i].length > 0) interleaved.push(queues[i].shift());
+      if (queues[i].length > 0) interleaved.push(queues[i].shift()!);
       else queues.splice(i, 1);
     }
   }
@@ -63,7 +63,7 @@ function interleavePosts(posts: any[]): any[] {
     ? Math.max(1, Math.min(QUOTE_INTERVAL, Math.floor(interleaved.length / textPosts.length)))
     : QUOTE_INTERVAL;
 
-  const result: any[] = [];
+  const result: Models.Document[] = [];
   let textIdx = 0;
   for (let i = 0; i < interleaved.length; i++) {
     result.push(interleaved[i]);
@@ -80,10 +80,10 @@ const Home = ({ darkMode, isAdmin }: DarkModeProps) => {
   const loaderRef = useRef<HTMLDivElement>(null);
   const { data: posts, fetchNextPage, hasNextPage } = useGetPosts() as unknown as {
     data: PostsQueryResult;
-    fetchNextPage: Function;
+    fetchNextPage: () => void;
     hasNextPage: boolean;
   };
-  const [allPosts, setAllPosts] = useState([]);
+  const [allPosts, setAllPosts] = useState<Models.Document[]>([]);
   const [activeCategory, setActiveCategory] = useState("ALL PINS");
   const [searchValue, setSearchValue] = useState("");
   const [searchFocused, setSearchFocused] = useState(false);
@@ -131,7 +131,7 @@ const Home = ({ darkMode, isAdmin }: DarkModeProps) => {
 
   useEffect(() => {
     if (posts?.pages) {
-      const newPosts = posts.pages.flatMap((page) => page.documents) as never[];
+      const newPosts = posts.pages.flatMap((page) => page.documents);
       setAllPosts(newPosts);
     }
   }, [posts]);

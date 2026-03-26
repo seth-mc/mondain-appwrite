@@ -2,6 +2,7 @@ import { FileUploadProgress, FileStatus } from "./types";
 import { getFileIconAndColor } from "./fileUtils";
 import { Progress } from "@/components/ui/progress";
 import { Link, X, GripVertical } from "lucide-react";
+import type { DraggableProvidedDraggableProps, DraggableProvidedDragHandleProps } from "@hello-pangea/dnd";
 
 interface FileCardProps {
   fileUploadProgress: FileUploadProgress;
@@ -9,8 +10,8 @@ interface FileCardProps {
   getFileUrl: (file: FileUploadProgress) => string;
   removeFile: (file: File) => void;
   innerRef?: React.Ref<HTMLDivElement>;
-  draggableProps?: any;
-  dragHandleProps?: any;
+  draggableProps?: DraggableProvidedDraggableProps;
+  dragHandleProps?: DraggableProvidedDragHandleProps | null;
 }
 
 const FileCard: React.FC<FileCardProps> = ({

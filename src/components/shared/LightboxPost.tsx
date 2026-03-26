@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useRef } from 'react';
+import React, { useEffect, useState, useRef, useCallback } from 'react';
 import { Models } from 'appwrite';
 import { motion, AnimatePresence } from 'framer-motion';
 import { appwriteConfig, databases } from '@/lib/appwrite/config';
@@ -69,7 +69,7 @@ const LightboxPost = ({
       setEditTags(Array.isArray(post.tags) ? [...post.tags] : []);
       setEditNotes(post.content || '');
     }
-  }, [post?.$id]); // only re-sync when post identity changes
+  }, [post]); // only re-sync when post identity changes
 
   // Build flat image list
   useEffect(() => {
@@ -97,24 +97,7 @@ const LightboxPost = ({
     return () => { cancelled = true; };
   }, [postId]);
 
-  // Keyboard navigation
-  useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      const tag = (e.target as HTMLElement).tagName;
-      if (tag === 'INPUT' || tag === 'TEXTAREA') return;
-      if (e.key === 'Escape') onClose();
-      else if (e.key === 'ArrowRight') handleNextImage();
-      else if (e.key === 'ArrowLeft') handlePreviousImage();
-    };
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [onClose, currentGlobalIndex, allImages]);
-
-  useEffect(() => {
-    if (showTagInput) tagInputRef.current?.focus();
-  }, [showTagInput]);
-
-  const handleNextImage = () => {
+  const handleNextImage = useCallback(() => {
     if (currentGlobalIndex >= allImages.length - 1) return;
     const next = allImages[currentGlobalIndex + 1];
     if (next.postId !== postId) {
@@ -126,9 +109,9 @@ const LightboxPost = ({
     }
     setCurrentGlobalIndex(prev => prev + 1);
     setImageLoaded(false);
-  };
+  }, [currentGlobalIndex, allImages, postId, allPosts, onNext]);
 
-  const handlePreviousImage = () => {
+  const handlePreviousImage = useCallback(() => {
     if (currentGlobalIndex <= 0) return;
     const prev = allImages[currentGlobalIndex - 1];
     if (prev.postId !== postId) {
@@ -141,7 +124,24 @@ const LightboxPost = ({
     }
     setCurrentGlobalIndex(prev => prev - 1);
     setImageLoaded(false);
-  };
+  }, [currentGlobalIndex, allImages, postId, allPosts, onPrevious]);
+
+  useEffect(() => {
+    if (showTagInput) tagInputRef.current?.focus();
+  }, [showTagInput]);
+
+  // Keyboard navigation
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      const tag = (e.target as HTMLElement).tagName;
+      if (tag === 'INPUT' || tag === 'TEXTAREA') return;
+      if (e.key === 'Escape') onClose();
+      else if (e.key === 'ArrowRight') handleNextImage();
+      else if (e.key === 'ArrowLeft') handlePreviousImage();
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [onClose, handleNextImage, handlePreviousImage]);
 
   const save = async (overrides?: { caption?: string; tags?: string[]; content?: string; quoteText?: string }) => {
     if (!post) return;

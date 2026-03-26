@@ -2,9 +2,26 @@ import React, { useEffect, useRef, useState, useCallback } from 'react';
 import { Play, Pause, FastForward, Music } from 'lucide-react';
 import useClickOutside from '@/hooks/useClickOutside';
 
+interface SoundCloudWidget {
+    bind: (event: string, callback: (data?: unknown) => void) => void;
+    unbind: (event: string) => void;
+    play: () => void;
+    pause: () => void;
+    toggle: () => void;
+    seekTo: (milliseconds: number) => void;
+    getPosition: (callback: (position: number) => void) => void;
+    getDuration: (callback: (duration: number) => void) => void;
+    getCurrentSound: (callback: (sound: { title: string } | null) => void) => void;
+    next: () => void;
+}
+
 declare global {
     interface Window {
-        SC: any;
+        SC: {
+            Widget: ((iframe: HTMLIFrameElement | null) => SoundCloudWidget) & {
+                Events: Record<string, string>;
+            };
+        };
     }
 }
 
@@ -45,7 +62,7 @@ const PlayerComponent: React.FC<PlayerComponentProps> = ({
         isLoading: true,
     });
 
-    const widgetRef = useRef<any>(null);
+    const widgetRef = useRef<SoundCloudWidget | null>(null);
     const iframeRef = useRef<HTMLIFrameElement>(null);
 
     // Click outside detection
@@ -88,6 +105,55 @@ const PlayerComponent: React.FC<PlayerComponentProps> = ({
         });
     }, []);
 
+    const setupPlayerBindings = useCallback(() => {
+        const widget = widgetRef.current;
+        if (!widget) return;
+
+        widget.bind(window.SC.Widget.Events.PLAY, () => {
+            setState(prev => ({ ...prev, playButtonState: "player__button__pause", record: "record rotate d" }));
+        });
+
+        widget.bind(window.SC.Widget.Events.PAUSE, () => {
+            setState(prev => ({ ...prev, playButtonState: "player__button__play", record: "record rotate paused d" }));
+        });
+
+        widget.bind(window.SC.Widget.Events.FINISH, () => {
+            widget.seekTo(0);
+            widget.play();
+        });
+    }, []);
+
+    const setupProgressUpdates = useCallback(() => {
+        const widget = widgetRef.current;
+        if (!widget) return;
+
+        const updateProgress = () => {
+            widget.getPosition((position: number) => {
+                setState(prev => ({ ...prev, currentPosition: position / 1000 }));
+            });
+            widget.getDuration((duration: number) => {
+                setState(prev => ({ ...prev, duration: duration / 1000 }));
+            });
+            widget.getCurrentSound((sound: { title: string } | null) => {
+                if (sound) {
+                    setState(prev => ({ ...prev, playertitle: sound.title }));
+                }
+            });
+        };
+
+        updateProgress();
+        const intervalId = setInterval(updateProgress, 1000);
+
+        return () => clearInterval(intervalId);
+    }, []);
+
+    const onWidgetReady = useCallback(() => {
+        console.log("Widget ready");
+        setState(prev => ({ ...prev, isWidgetReady: true, isLoading: false }));
+        setupPlayerBindings();
+        setupProgressUpdates();
+    }, [setupPlayerBindings, setupProgressUpdates]);
+
     const initializeWidget = useCallback(() => {
         try {
             if (!iframeRef.current || !window.SC) {
@@ -103,54 +169,7 @@ const PlayerComponent: React.FC<PlayerComponentProps> = ({
             console.error("Error initializing SoundCloud widget:", error);
             return false;
         }
-    }, []);
-
-    const onWidgetReady = useCallback(() => {
-        console.log("Widget ready");
-        setState(prev => ({ ...prev, isWidgetReady: true, isLoading: false }));
-        setupPlayerBindings();
-        setupProgressUpdates();
-    }, []);
-
-    const setupPlayerBindings = useCallback(() => {
-        if (!widgetRef.current) return;
-
-        widgetRef.current.bind(window.SC.Widget.Events.PLAY, () => {
-            setState(prev => ({ ...prev, playButtonState: "player__button__pause", record: "record rotate d" }));
-        });
-
-        widgetRef.current.bind(window.SC.Widget.Events.PAUSE, () => {
-            setState(prev => ({ ...prev, playButtonState: "player__button__play", record: "record rotate paused d" }));
-        });
-
-        widgetRef.current.bind(window.SC.Widget.Events.FINISH, () => {
-            widgetRef.current.seekTo(0);
-            widgetRef.current.play();
-        });
-    }, []);
-
-    const setupProgressUpdates = useCallback(() => {
-        if (!widgetRef.current) return;
-
-        const updateProgress = () => {
-            widgetRef.current.getPosition((position: number) => {
-                setState(prev => ({ ...prev, currentPosition: position / 1000 }));
-            });
-            widgetRef.current.getDuration((duration: number) => {
-                setState(prev => ({ ...prev, duration: duration / 1000 }));
-            });
-            widgetRef.current.getCurrentSound((sound: any) => {
-                if (sound) {
-                    setState(prev => ({ ...prev, playertitle: sound.title }));
-                }
-            });
-        };
-
-        updateProgress();
-        const intervalId = setInterval(updateProgress, 1000);
-
-        return () => clearInterval(intervalId);
-    }, []);
+    }, [onWidgetReady]);
 
     useEffect(() => {
         const initializePlayer = async () => {

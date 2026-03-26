@@ -97,6 +97,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
 export default AuthProvider;
 
+// eslint-disable-next-line react-refresh/only-export-components
 export const useUserContext = () => {
   return useContext(AuthContext);
 };

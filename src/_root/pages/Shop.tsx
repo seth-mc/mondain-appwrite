@@ -261,8 +261,8 @@ const Shop = ({ darkMode, isAdmin, toggleDarkMode }: DarkModeProps) => {
             <button
               className="bg-black text-white px-6 py-3 rounded-full shadow-lg hover:bg-gray-800 transition-colors font-medium"
               onClick={() => {
-                const cart = document.getElementById('main-cart') as any;
-                if (cart) {
+                const cart = document.getElementById('main-cart') as (HTMLElement & { showModal?: () => void }) | null;
+                if (cart && typeof cart.showModal === 'function') {
                   cart.showModal();
                 }
               }}

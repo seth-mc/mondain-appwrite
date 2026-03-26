@@ -1,3 +1,5 @@
+import { Models } from "appwrite";
+
 export type INavLink = {
   label: string;
   route: string;
@@ -61,9 +63,7 @@ export type INewUser = {
 
 export type SearchResultProps = {
   isSearchFetching: boolean;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  searchedPosts: any;
-
+  searchedPosts: Models.Document[];
 };
 
 export type DarkModeProps = {
@@ -93,7 +93,7 @@ export type Creator = {
   // add other properties if needed
 };
 
-export type DocumentType = {
+export type DocumentType = Models.Document & {
   caption: string;
   tags: string[];
   location: string;
@@ -104,12 +104,7 @@ export type DocumentType = {
   shopifyProductId?: string;
   mediaType?: string;
   quoteText?: string;
-  $id: string;
-  $createdAt: string;
-  $updatedAt: string;
-  $permissions: string[];
   creator: Creator;
-  // add other properties if needed
 };
 
 export type PostPage = {

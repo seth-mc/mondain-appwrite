@@ -21,9 +21,9 @@ const Header = ({ darkMode, isAdmin, toggleDarkMode, resetFilters }: HeaderProps
 
   const handleCartClick = () => {
     // Look for the main cart from Shop.tsx first
-    const mainCart = document.querySelector('#main-cart') as any;
-    const globalCart = document.querySelector('#global-cart') as any;
-    const anyShopifyCart = document.querySelector('shopify-cart') as any;
+    const mainCart = document.querySelector('#main-cart') as (HTMLElement & { showModal?: () => void }) | null;
+    const globalCart = document.querySelector('#global-cart') as (HTMLElement & { showModal?: () => void }) | null;
+    const anyShopifyCart = document.querySelector('shopify-cart') as (HTMLElement & { showModal?: () => void }) | null;
     const cart = mainCart || globalCart || anyShopifyCart;
     
     if (cart && typeof cart.showModal === 'function') {

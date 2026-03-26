@@ -7,7 +7,7 @@ import { useDeletePostFull } from '@/lib/react-query/queries';
 type PostProps = {
   post: Models.Document;
   newToSite?: boolean;
-  dragHandleProps?: any;
+  dragHandleProps?: Record<string, unknown>;
   isAdmin?: boolean;
   delay?: number;
   isSelected?: boolean;
@@ -269,10 +269,11 @@ const Post = ({ post, dragHandleProps, isAdmin, delay = 0, isSelected = false }:
       {/* Embedded Product Modal for Shoppable Posts */}
       {!isQuote && hasShopifyProduct && (
         <dialog id={`product-modal-${post.$id}`} className="product-modal z-50">
-          {/* @ts-ignore - custom shopify attribute */}
+          {/* @ts-expect-error - custom shopify attribute */}
           <shopify-context type="product" gid={`gid://shopify/Product/${shopifyProductId}`}>
             {/* dangerouslySetInnerHTML on <template> correctly populates its content fragment,
                 which is required for Shopify Web Components to recognise their context */}
+            {/* @ts-expect-error - template dangerouslySetInnerHTML is required for Shopify Web Components */}
             <template dangerouslySetInnerHTML={{ __html: `
               <div class="modal-container">
                 <div class="modal-close-container">

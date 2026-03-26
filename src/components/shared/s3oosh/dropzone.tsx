@@ -101,7 +101,7 @@ const DropzoneComponent: React.FC<DropzoneComponentProps> = ({
 
       const fileUploadBatch = acceptedFiles.map(async (file) => {
         try {
-          let isVideo = file.type.startsWith('video/');
+          const isVideo = file.type.startsWith('video/');
           let gifUrl: string | null = null;
 
           if (isVideo) {

@@ -1,7 +1,8 @@
 // inspired by https://www.a1k0n.net/2011/07/20/donut-math.html
 // Loading 3D Cube
-// eslint-disable-next-line react-refresh/only-export-components, prefer-const
-let A = 0, B = 0, C = 0;
+let A = 0;
+let B = 0;
+const C = 0;
 
 const cubeWidth = 10;
 const width =50; const height = 20;
@@ -18,8 +19,7 @@ let ooz = 0;
 let xp = 0, yp = 0;
 let idx = 0;
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-const memset = (array: any[], val: any, size: number): void => {
+const memset = (array: unknown[], val: unknown, size: number): void => {
   for (let i = 0; i < size; ++i) {
     array[i] = val;
   }
@@ -93,10 +93,3 @@ export const asciiFrame = () => {
   }
   return face.join("");
 };
-
-// Default export for backward compatibility
-const CubeLoader = () => {
-  return asciiFrame();
-};
-
-export default CubeLoader;

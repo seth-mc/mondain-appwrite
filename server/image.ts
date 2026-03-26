@@ -4,6 +4,7 @@ import { pipeline } from '@xenova/transformers';
 const router: Router = express.Router();
 
 // Initialize the model
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 let model: any = null;
 
 // Load the model on first request
@@ -18,7 +19,7 @@ interface AnalyzeRequest {
   imageUrl: string;
 }
 
-router.post('/analyze', async (req: Request<{}, {}, AnalyzeRequest>, res: Response) => {
+router.post('/analyze', async (req: Request<Record<string, never>, Record<string, never>, AnalyzeRequest>, res: Response) => {
   try {
     const { imageUrl } = req.body;
     
@@ -33,7 +34,7 @@ router.post('/analyze', async (req: Request<{}, {}, AnalyzeRequest>, res: Respon
     const result = await model(imageUrl);
     
     // Extract tags from the caption
-    const caption = result[0].generated_text;
+    const caption = result[0].generated_text as string;
     const tags = caption.toLowerCase().split(' ').filter(word => word.length > 3);
     
     res.json({
