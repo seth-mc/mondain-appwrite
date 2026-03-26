@@ -20,12 +20,14 @@ const port = Number(process.env.PORT) || 3001;
 
 // Basic middleware
 app.use(cors({
-  origin: process.env.NODE_ENV === 'production' 
+  origin: process.env.NODE_ENV === 'production'
     ? true // Same origin in production
     : [
-        'http://localhost:8080', 
-        'http://localhost:3000'
-      ],
+      'http://localhost:8080',
+      'http://localhost:3000',
+      'https://mondain.page',
+      'https://*.mondain.page',
+    ],
   credentials: true
 }));
 app.use(express.json({ limit: '10mb' }));
@@ -49,7 +51,7 @@ app.get('/api/health', (req, res) => {
 if (process.env.NODE_ENV === 'production') {
   // Serve static files from the built React app
   app.use(express.static(path.join(__dirname, '../dist')));
-  
+
   // Handle React Router - send all non-API routes to React app
   app.get('*', (req, res) => {
     if (!req.path.startsWith('/api/')) {
