@@ -64,6 +64,7 @@ const PlayerComponent: React.FC<PlayerComponentProps> = ({
 
     const widgetRef = useRef<SoundCloudWidget | null>(null);
     const iframeRef = useRef<HTMLIFrameElement>(null);
+    const progressIntervalRef = useRef<NodeJS.Timeout | null>(null);
 
     // Click outside detection
     const playerRef = useClickOutside<HTMLDivElement>(() => {
@@ -142,9 +143,13 @@ const PlayerComponent: React.FC<PlayerComponentProps> = ({
         };
 
         updateProgress();
-        const intervalId = setInterval(updateProgress, 1000);
+        progressIntervalRef.current = setInterval(updateProgress, 1000);
 
-        return () => clearInterval(intervalId);
+        return () => {
+            if (progressIntervalRef.current) {
+                clearInterval(progressIntervalRef.current);
+            }
+        };
     }, []);
 
     const onWidgetReady = useCallback(() => {
@@ -210,12 +215,19 @@ const PlayerComponent: React.FC<PlayerComponentProps> = ({
                 widgetRef.current.unbind(window.SC.Widget.Events.PAUSE);
                 widgetRef.current.unbind(window.SC.Widget.Events.FINISH);
             }
+            if (progressIntervalRef.current) {
+                clearInterval(progressIntervalRef.current);
+            }
         };
     }, [loadSoundCloudAPI, initializeWidget]);
 
     const setPlayButton = () => {
         if (widgetRef.current && state.isWidgetReady) {
-            widgetRef.current.toggle();
+            if (state.playButtonState === "player__button__play") {
+                widgetRef.current.play();
+            } else {
+                widgetRef.current.pause();
+            }
         }
     };
 
@@ -293,11 +305,12 @@ const PlayerComponent: React.FC<PlayerComponentProps> = ({
                 </div>
             </div>
             <iframe
+                id="soundcloud-player-iframe"
                 ref={iframeRef}
                 className="sc-widget"
-                src={`https://w.soundcloud.com/player/?url=${state.playlistlink}`}
+                src={`https://w.soundcloud.com/player/?url=${encodeURIComponent(state.playlistlink)}&enable_api=1`}
                 allow="autoplay"
-                style={{ display: 'none' }}
+                style={{ position: 'absolute', width: 0, height: 0, visibility: 'hidden', border: 0 }}
             ></iframe>
         </div>
     );
