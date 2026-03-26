@@ -28,8 +28,16 @@ function isTextPost(post: Models.Document): boolean {
   );
 }
 
+function shuffle<T>(arr: T[]): T[] {
+  for (let i = arr.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [arr[i], arr[j]] = [arr[j], arr[i]];
+  }
+  return arr;
+}
+
 function interleavePosts(posts: Models.Document[]): Models.Document[] {
-  const textPosts = posts.filter(isTextPost);
+  const textPosts = shuffle(posts.filter(isTextPost));
   const regular = posts.filter(p => !isTextPost(p));
 
   // Build a bucket per non-TEXT main category + one for uncategorized
@@ -46,6 +54,10 @@ function interleavePosts(posts: Models.Document[]): Models.Document[] {
     );
     (mainCat ? buckets[mainCat.name] : buckets["OTHER"]).push(post);
   });
+
+  // Shuffle within each bucket so the same category doesn't always appear
+  // in the same chronological order across batches.
+  Object.values(buckets).forEach(bucket => shuffle(bucket));
 
   // Round-robin pick one from each non-empty bucket in order
   const queues = Object.values(buckets).filter(q => q.length > 0);
@@ -65,10 +77,17 @@ function interleavePosts(posts: Models.Document[]): Models.Document[] {
 
   const result: Models.Document[] = [];
   let textIdx = 0;
+  // Random initial offset (0 to effectiveInterval-1) so quotes don't always
+  // land at the same position relative to each batch-of-9 boundary.
+  let countdown = Math.floor(Math.random() * effectiveInterval) + 1;
   for (let i = 0; i < interleaved.length; i++) {
     result.push(interleaved[i]);
-    if ((i + 1) % effectiveInterval === 0 && textIdx < textPosts.length) {
+    countdown--;
+    if (countdown <= 0 && textIdx < textPosts.length) {
       result.push(textPosts[textIdx++]);
+      // Jitter ±1 around effectiveInterval so quotes never cluster at a fixed offset
+      const jitter = Math.floor(Math.random() * 3) - 1; // -1, 0, or +1
+      countdown = Math.max(2, effectiveInterval + jitter);
     }
   }
   while (textIdx < textPosts.length) result.push(textPosts[textIdx++]);
