@@ -40,8 +40,8 @@ const Post = ({ post, dragHandleProps, isAdmin, delay = 0, isSelected = false }:
   }, [contextMenu]);
 
   const handleContextMenu = (e: React.MouseEvent) => {
-    if (!isAdmin) return;
     e.preventDefault();
+    if (!isAdmin) return;
     setContextMenu({ x: e.clientX, y: e.clientY });
   };
 
@@ -180,24 +180,30 @@ const Post = ({ post, dragHandleProps, isAdmin, delay = 0, isSelected = false }:
         <img
           src={thumbnailUrl}
           alt="video-thumbnail"
-          style={{
-            width: '100%',
-            height: 'auto',
-            borderRadius: '4px',
-            display: 'block'
-          }}
-        />
-      ) : (
-        <img
-          src={isHovered && imageUrls.length > 1 ? imageUrls[1] : imageUrls[0]}
-          alt="user-post"
+          draggable={false}
+          onDragStart={(e) => e.preventDefault()}
           style={{
             width: '100%',
             height: 'auto',
             borderRadius: '4px',
             display: 'block',
-            transition: 'opacity 0.3s ease-in-out'
-          }}
+            WebkitUserDrag: 'none',
+          } as React.CSSProperties}
+        />
+      ) : (
+        <img
+          src={isHovered && imageUrls.length > 1 ? imageUrls[1] : imageUrls[0]}
+          alt="user-post"
+          draggable={false}
+          onDragStart={(e) => e.preventDefault()}
+          style={{
+            width: '100%',
+            height: 'auto',
+            borderRadius: '4px',
+            display: 'block',
+            transition: 'opacity 0.3s ease-in-out',
+            WebkitUserDrag: 'none',
+          } as React.CSSProperties}
         />
       )}
 
