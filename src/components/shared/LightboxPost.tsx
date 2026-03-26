@@ -218,7 +218,7 @@ const LightboxPost = ({
         </button>
 
         {/* Main content row */}
-        <div className="flex items-center gap-6 w-full max-w-6xl max-h-[90vh]" style={{ pointerEvents: 'none' }}>
+        <div className="flex items-center gap-6 w-full max-w-6xl max-h-[90vh] pt-20" style={{ pointerEvents: 'none' }}>
 
           {/* ── Media area ── */}
           <div
