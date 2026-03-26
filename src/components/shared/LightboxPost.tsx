@@ -218,7 +218,7 @@ const LightboxPost = ({
         animate={{ opacity: 1 }}
         exit={{ opacity: 0 }}
         transition={{ duration: 0.2 }}
-        className="fixed inset-0 z-50 flex items-center justify-center p-6"
+        className="fixed inset-0 z-50 flex items-center justify-center p-4 lg:p-6"
         style={{ background: 'rgba(0,0,0,0.85)' }}
         onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}
       >
@@ -233,7 +233,7 @@ const LightboxPost = ({
         </button>
 
         {/* Main content row */}
-        <div className="flex items-center gap-6 w-full max-w-6xl max-h-[90vh] pt-20" style={{ pointerEvents: 'none' }}>
+        <div className="flex flex-col lg:flex-row items-center gap-6 w-full max-w-6xl max-h-[90vh] pt-20" style={{ pointerEvents: 'none' }}>
 
           {/* ── Media area ── */}
           <div
@@ -330,7 +330,7 @@ const LightboxPost = ({
             animate={{ x: 0, opacity: 1 }}
             exit={{ x: 32, opacity: 0 }}
             transition={{ duration: 0.28, ease: [0.4, 0, 0.2, 1] }}
-            className="shrink-0 flex flex-col rounded-2xl overflow-hidden"
+            className="hidden lg:flex shrink-0 flex-col rounded-2xl overflow-hidden"
             style={{
               width: 340,
               maxHeight: '85vh',
