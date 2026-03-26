@@ -76,6 +76,8 @@ function interleavePosts(posts: Models.Document[]): Models.Document[] {
   return result;
 }
 
+const DISPLAY_BATCH = 9;
+
 const Home = ({ darkMode, isAdmin }: DarkModeProps) => {
   const loaderRef = useRef<HTMLDivElement>(null);
   const { data: posts, fetchNextPage, hasNextPage } = useGetPosts() as unknown as {
@@ -83,7 +85,13 @@ const Home = ({ darkMode, isAdmin }: DarkModeProps) => {
     fetchNextPage: () => void;
     hasNextPage: boolean;
   };
-  const [allPosts, setAllPosts] = useState<Models.Document[]>([]);
+  // Layer 1: background sorted buffer — each incoming 30-batch is interleaved independently
+  const [sortedBuffer, setSortedBuffer] = useState<Models.Document[]>([]);
+  // Layer 2: how many posts to reveal from the buffer to the grid
+  const [displayCount, setDisplayCount] = useState(DISPLAY_BATCH);
+  // Track how many pages we've already processed so we never re-interleave old pages
+  const processedPageCount = useRef(0);
+
   const [activeCategory, setActiveCategory] = useState("ALL PINS");
   const [searchValue, setSearchValue] = useState("");
   const [searchFocused, setSearchFocused] = useState(false);
@@ -102,6 +110,7 @@ const Home = ({ darkMode, isAdmin }: DarkModeProps) => {
   // "Filtered" = user has typed a search term OR selected a specific category (not "ALL PINS")
   const isFiltered = !!(searchValue || (activeCategory && activeCategory !== "ALL PINS"));
 
+  // Infinite scroll: first drain the buffer 9-at-a-time, then fetch the next 30 from the server
   const tryFetchMore = useCallback(() => {
     const distanceFromBottom =
       document.documentElement.scrollHeight - window.scrollY - window.innerHeight;
@@ -109,10 +118,14 @@ const Home = ({ darkMode, isAdmin }: DarkModeProps) => {
       if (isFiltered) {
         if (hasNextSearchPage) fetchNextSearchPage();
       } else {
-        if (hasNextPage) fetchNextPage();
+        if (displayCount < sortedBuffer.length) {
+          setDisplayCount(prev => prev + DISPLAY_BATCH);
+        } else if (hasNextPage) {
+          fetchNextPage();
+        }
       }
     }
-  }, [isFiltered, hasNextPage, hasNextSearchPage, fetchNextPage, fetchNextSearchPage]);
+  }, [isFiltered, hasNextPage, hasNextSearchPage, fetchNextPage, fetchNextSearchPage, displayCount, sortedBuffer.length]);
 
   // Scroll listeners
   useEffect(() => {
@@ -124,16 +137,25 @@ const Home = ({ darkMode, isAdmin }: DarkModeProps) => {
     return () => window.removeEventListener("scroll", onScroll);
   }, [tryFetchMore]);
 
-  // Also fire immediately after each batch loads (handles short pages that don't need scrolling)
+  // Also fire immediately after each buffer/display update (handles short pages)
   useEffect(() => {
     tryFetchMore();
-  }, [allPosts, tryFetchMore]);
+  }, [sortedBuffer, displayCount, tryFetchMore]);
 
+  // When new pages arrive, interleave each new batch independently and append to buffer
   useEffect(() => {
-    if (posts?.pages) {
-      const newPosts = posts.pages.flatMap((page) => page.documents);
-      setAllPosts(newPosts);
+    if (!posts?.pages) return;
+    const totalPages = posts.pages.length;
+    if (totalPages <= processedPageCount.current) return;
+
+    const newPosts: Models.Document[] = [];
+    for (let i = processedPageCount.current; i < totalPages; i++) {
+      newPosts.push(...(posts.pages[i].documents || []));
     }
+    processedPageCount.current = totalPages;
+
+    if (newPosts.length === 0) return;
+    setSortedBuffer(prev => [...prev, ...interleavePosts(newPosts)]);
   }, [posts]);
 
   if (!posts)
@@ -145,7 +167,7 @@ const Home = ({ darkMode, isAdmin }: DarkModeProps) => {
 
   const shouldShowSearchResults = searchValue !== "";
   const shouldShowPosts =
-    !shouldShowSearchResults && !isFiltered && posts.pages.every((item) => item.documents.length === 0);
+    !shouldShowSearchResults && !isFiltered && sortedBuffer.length === 0;
 
   const bgColor = darkMode ? "#000000" : "#f0f0f0";
 
@@ -306,7 +328,7 @@ const Home = ({ darkMode, isAdmin }: DarkModeProps) => {
                   <MasonryLayout
                     isAdmin={isAdmin}
                     newToSite={newToSite}
-                    posts={isFiltered ? searchedPosts?.pages.flatMap((page) => page.documents) || [] : interleavePosts(allPosts)}
+                    posts={isFiltered ? searchedPosts?.pages.flatMap((page) => page.documents) || [] : sortedBuffer.slice(0, displayCount)}
                   />
                 </div>
               </div>
@@ -315,7 +337,7 @@ const Home = ({ darkMode, isAdmin }: DarkModeProps) => {
 
           {/* Infinite scroll loader */}
           <div ref={loaderRef} className="mt-10 pb-32 flex justify-center">
-            {(isFiltered ? hasNextSearchPage : hasNextPage) && <Loader />}
+            {(isFiltered ? hasNextSearchPage : (displayCount < sortedBuffer.length || hasNextPage)) && <Loader />}
           </div>
         </div>
       </main>
