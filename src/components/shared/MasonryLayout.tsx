@@ -50,17 +50,30 @@ const MasonryLayout = ({ newToSite, posts, isAdmin = true }: PostsProps) => {
   }, [orderedPosts]);
 
   useEffect(() => {
-    // Ensure all posts have order values, assign them if missing
-    const postsWithOrder = posts.map((post, index) => ({
-      ...post,
-      order: post.order !== undefined ? post.order : index
-    }));
-    
-    // Sort by order field to ensure proper ordering
-    const sortedPosts = postsWithOrder.sort((a, b) => (a.order || 0) - (b.order || 0));
-    
-    console.log('Posts loaded with order:', sortedPosts.map(p => ({ id: p.$id, order: p.order })));
-    setOrderedPosts(sortedPosts as PostDocument[]);
+    setOrderedPosts(prev => {
+      const existingIds = new Set(prev.map(p => p.$id));
+      const incomingIds = new Set(posts.map(p => p.$id));
+
+      // If any currently-displayed post is absent from the new list, it's a full reset
+      // (e.g. navigating away and back). Replace everything.
+      const isReset = prev.some(p => !incomingIds.has(p.$id));
+      if (isReset) {
+        return posts.map((post, index) => ({
+          ...post,
+          order: post.order !== undefined ? post.order : index,
+        })).sort((a, b) => (a.order || 0) - (b.order || 0)) as PostDocument[];
+      }
+
+      // Normal case: append only the posts that aren't already rendered
+      const newPosts = posts.filter(p => !existingIds.has(p.$id));
+      if (newPosts.length === 0) return prev;
+
+      const newWithOrder = newPosts.map((post, i) => ({
+        ...post,
+        order: post.order !== undefined ? post.order : prev.length + i,
+      }));
+      return [...prev, ...newWithOrder] as PostDocument[];
+    });
   }, [posts]);
 
   const handleClose = () => {
