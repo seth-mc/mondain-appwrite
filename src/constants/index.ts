@@ -1,16 +1,16 @@
 export const sections = [
-    {
-      label: 'home',
-      route: '/',
-    },
-    {
-      label: 'dj',
-      route: '/dj',
-    },
-    {
-      label: 'shop',
-      route: '/shop',
-    }
+  {
+    label: 'home',
+    route: '/',
+  },
+  {
+    label: 'dj',
+    route: '/dj',
+  },
+  {
+    label: 'shop',
+    route: '/shop',
+  }
 ]
 
 export const adminSections = [
@@ -25,61 +25,49 @@ export const adminSections = [
 ]
 
 export const categories = [
-  {
-    name: 'posters',
-  },
-  {
-    name: 'videos',
-  },
-  {
-    name: 'digital',
-  },
-  {
-    name: 'mondain',
-  },
-  {
-    name: 'fitness',
-  },
-  {
-    name: 'art',
-  },
-  {
-    name: 'city',
-  },
-  {
-    name: 'nature',
-  },
-  {
-    name: 'inspiration',
-  },
-  {
-    name: 'clothing', 
-  },
-  {
-    name: 'music',
-  },
-  {
-    name: 'movies',
-  },
-{
-    name: 'car',
-  },
-  {
-    name: 'web',
-  }, 
-  {
-    name: 'architecture',
-  }, 
-  {
-    name: 'celebs', 
-  }, 
-  
+  { name: 'all pins' },
+  { name: 'celebs' },
+  { name: 'art' },
+  { name: 'city' },
+  { name: 'nature' },
+  { name: 'houses + rooms' },
+  { name: 'clothing' },
+  { name: 'ps' },
+  { name: 'mondain home' },
+  { name: 'mixed media' },
+  { name: 'itali' },
+  { name: 'car' },
+  { name: 'active' },
+  { name: 'swiss / international style' },
+  { name: 'mag' },
+  { name: 'music' },
+  { name: 'stik creative direction' },
+  { name: 'history' },
+  { name: 'synergy mood' },
+  { name: 'hat-01' },
+  { name: 'posters' },
+  { name: 'videos' },
+  { name: 'digital' },
+  { name: 'mondain' },
+  { name: 'fitness' },
+  { name: 'movies' },
+  { name: 'web' },
+  { name: 'architecture' },
 ];
 
 export const mainCategories = [
   {
-    name: 'POSTERS',
-    subcategories: ['nature', 'city', 'architecture', 'art', 'mondain', 'fitness', 'clothing', 'celebs', 'posters']
+    name: 'THINGS',
+    subcategories: [
+      'nature', 'city', 'architecture', 'art',
+      'fitness', 'clothing', 'celebs', 'posters', 'houses + rooms',
+      'ps', 'mixed media', 'car', 'active',
+      'history'
+    ]
+  },
+  {
+    name: 'MONDAIN',
+    subcategories: ['mondain', 'mondain home']
   },
   {
     name: 'VIDEO',
@@ -87,6 +75,10 @@ export const mainCategories = [
   },
   {
     name: 'DIGITAL',
-    subcategories: ['web', 'inspiration', 'digital']
-  }
+    subcategories: ['web', 'digital']
+  },
+  {
+    name: 'TEXT',
+    subcategories: ['quote', 'inspiration']
+  },
 ];

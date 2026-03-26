@@ -74,7 +74,7 @@ export const revokeThumbnails = (thumbnails: Record<string, string>) => {
 };
 
 
-const S3_BUCKET_URL = "https://mondain-presigned-media.s3.us-east-2.amazonaws.com";
+const S3_BUCKET_URL = "https://mondain-uploads.s3.us-east-2.amazonaws.com";
 
 export const getFileUrl = (fileOrFileName: FileUploadProgress | string) => {
   let fileName: string;

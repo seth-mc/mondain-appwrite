@@ -5,6 +5,7 @@ import { Ref, useCallback, useEffect, useState } from "react";
 import { useDropzone } from "../dropzone/react";
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { DragDropContext, Droppable, Draggable, DropResult } from '@hello-pangea/dnd';
 import { getPreSignedUrl } from "./_actions/getPreSignedUrl";
 import { FileUploadProgress, FileStatus } from "./types";
 import { generateThumbnails, getFileUrl, revokeThumbnails } from "./fileUtils";
@@ -31,7 +32,7 @@ interface DropzoneComponentProps {
     fileStatus: FileStatus
   ) => void;
   removeFile: (file: File) => void;
-  dirInBucket: string | null; 
+  dirInBucket: string | null;
   onUploadComplete?: (urls: string[]) => void;
 }
 
@@ -52,6 +53,19 @@ const DropzoneComponent: React.FC<DropzoneComponentProps> = ({
   const [thumbnails, setThumbnails] = useState<Record<string, string>>({});
   const [permanentUrls, setPermanentUrls] = useState<string[]>([]);
   const { processVideoToGif } = useVideoProcessor();
+
+  useEffect(() => {
+    const orderedUrls = filesToUpload
+      .filter(f => f.status === FileStatus.Uploaded && f.permanentUrl)
+      .map(f => f.permanentUrl as string);
+
+    setPermanentUrls(prev => {
+      if (JSON.stringify(prev) !== JSON.stringify(orderedUrls)) {
+        return orderedUrls;
+      }
+      return prev;
+    });
+  }, [filesToUpload]);
 
   useEffect(() => {
     if (onUploadComplete && permanentUrls.length > 0) {
@@ -101,12 +115,12 @@ const DropzoneComponent: React.FC<DropzoneComponentProps> = ({
             // Download the GIF from local server and upload to S3
             const gifResponse = await fetch(gifUrl);
             const gifBlob = await gifResponse.blob();
-            
+
             // Create a new File object from the GIF blob
             const gifFile = new File([gifBlob], file.name.replace(/\.[^/.]+$/, '.gif'), {
               type: 'image/gif'
             });
-            
+
             // Upload the GIF to S3 using the same flow as images
             const presignedUrlResponse = await getPreSignedUrl(
               gifFile.name,
@@ -123,10 +137,10 @@ const DropzoneComponent: React.FC<DropzoneComponentProps> = ({
             const source = axios.CancelToken.source();
             setFilesToUpload((prev) => [
               ...prev,
-              { 
-                progress: 0, 
-                file: file, 
-                source, 
+              {
+                progress: 0,
+                file: file,
+                source,
                 status: FileStatus.Uploading,
                 isVideo: true
               },
@@ -140,18 +154,17 @@ const DropzoneComponent: React.FC<DropzoneComponentProps> = ({
             });
 
             const permanentUrl = await getFileUrl(newFileName);
-            setPermanentUrls((prev) => [...prev, permanentUrl]);
-            
+
             setFilesToUpload((prevUploadProgress) =>
               prevUploadProgress.map((item) =>
                 item.file.name === file.name
-                  ? { 
-                      ...item, 
-                      status: FileStatus.Uploaded, 
-                      newFileName, 
-                      permanentUrl,
-                      thumbnailUrl: permanentUrl // GIF serves as its own thumbnail
-                    }
+                  ? {
+                    ...item,
+                    status: FileStatus.Uploaded,
+                    newFileName,
+                    permanentUrl,
+                    thumbnailUrl: permanentUrl // GIF serves as its own thumbnail
+                  }
                   : item
               )
             );
@@ -172,10 +185,10 @@ const DropzoneComponent: React.FC<DropzoneComponentProps> = ({
             const source = axios.CancelToken.source();
             setFilesToUpload((prev) => [
               ...prev,
-              { 
-                progress: 0, 
-                file: file, 
-                source, 
+              {
+                progress: 0,
+                file: file,
+                source,
                 status: FileStatus.Uploading,
                 isVideo: false
               },
@@ -189,17 +202,16 @@ const DropzoneComponent: React.FC<DropzoneComponentProps> = ({
             });
 
             const permanentUrl = await getFileUrl(newFileName);
-            setPermanentUrls((prev) => [...prev, permanentUrl]);
-            
+
             setFilesToUpload((prevUploadProgress) =>
               prevUploadProgress.map((item) =>
                 item.file.name === file.name
-                  ? { 
-                      ...item, 
-                      status: FileStatus.Uploaded, 
-                      newFileName, 
-                      permanentUrl
-                    }
+                  ? {
+                    ...item,
+                    status: FileStatus.Uploaded,
+                    newFileName,
+                    permanentUrl
+                  }
                   : item
               )
             );
@@ -226,6 +238,22 @@ const DropzoneComponent: React.FC<DropzoneComponentProps> = ({
     [setErrorMessage, maxTotalFiles, filesToUpload.length, dirInBucket, setUploadUrls, setFilesToUpload, onUploadProgress, processVideoToGif]
   );
 
+  const onDragEnd = useCallback((result: DropResult) => {
+    if (!result.destination) return;
+
+    const sourceIndex = result.source.index;
+    const destinationIndex = result.destination.index;
+
+    if (sourceIndex === destinationIndex) return;
+
+    setFilesToUpload(prev => {
+      const items = Array.from(prev);
+      const [reorderedItem] = items.splice(sourceIndex, 1);
+      items.splice(destinationIndex, 0, reorderedItem);
+      return items;
+    });
+  }, [setFilesToUpload]);
+
   const { getRootProps, getInputProps } = useDropzone({
     onDrop,
     accept: {
@@ -241,35 +269,59 @@ const DropzoneComponent: React.FC<DropzoneComponentProps> = ({
 
   return (
     <div className="max-w-lg mx-auto mt-8">
-    <div className="flex flex-col items-center justify-center p-4 md:p-8 border border-gray-200 rounded-lg shadow-md bg-gray-100 hover:bg-gray-200 transition duration-300" {...getRootProps()}>
-      <div className="flex flex-col items-center justify-center space-y-2 md:space-y-4">
-        <HardDriveUploadIcon size={24} className="text-gray-500 md:text-xl" />
-        <p className="text-base md:text-lg font-semibold text-gray-800">Drag & Drop Files Here</p>
-        <p className="text-xs md:text-sm text-gray-600">or click to browse</p>
-      </div>
-      <Input {...inputProps} className="hidden" />
-      {errorMessage && <div className="mt-2 md:mt-4 text-xs md:text-sm text-red-600">{errorMessage}</div>}
-      {filesToUpload.length > 0 && (
-        <div className="mt-4 w-full">
-          <ScrollArea className="max-h-64 md:max-h-96 overflow-y-auto">
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2 md:gap-4">
-              {filesToUpload.map((fileUploadProgress, index) => (
-                <FileCard
-                  key={index}
-                  fileUploadProgress={fileUploadProgress}
-                  thumbnails={thumbnails}
-                  getFileUrl={getFileUrl}
-                  removeFile={removeFile}
-                />
-              ))}
-            </div>
-          </ScrollArea>
+      <div className="flex flex-col items-center justify-center p-4 md:p-8 border border-gray-200 rounded-lg shadow-md bg-gray-100 hover:bg-gray-200 transition duration-300" {...getRootProps()}>
+        <div className="flex flex-col items-center justify-center space-y-2 md:space-y-4">
+          <HardDriveUploadIcon size={24} className="text-gray-500 md:text-xl" />
+          <p className="text-base md:text-lg font-semibold text-gray-800">Drag & Drop Files Here</p>
+          <p className="text-xs md:text-sm text-gray-600">or click to browse</p>
         </div>
-      )}
+        <Input {...inputProps} className="hidden" />
+        {errorMessage && <div className="mt-2 md:mt-4 text-xs md:text-sm text-red-600">{errorMessage}</div>}
+        {filesToUpload.length > 0 && (
+          <div className="mt-4 w-full" onClick={(e) => e.stopPropagation()}>
+            <ScrollArea className="max-h-64 md:max-h-96 overflow-y-auto">
+              <DragDropContext onDragEnd={onDragEnd}>
+                <Droppable droppableId="files-list" direction="vertical">
+                  {(provided) => (
+                    <div
+                      {...provided.droppableProps}
+                      ref={provided.innerRef}
+                      className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2 md:gap-4"
+                    >
+                      {filesToUpload.map((fileUploadProgress, index) => (
+                        <Draggable key={fileUploadProgress.file.name} draggableId={fileUploadProgress.file.name} index={index}>
+                          {(provided, snapshot) => (
+                            <div
+                              ref={provided.innerRef}
+                              {...provided.draggableProps}
+                              style={{
+                                ...provided.draggableProps.style,
+                                opacity: snapshot.isDragging ? 0.8 : 1,
+                              }}
+                            >
+                              <FileCard
+                                fileUploadProgress={fileUploadProgress}
+                                thumbnails={thumbnails}
+                                getFileUrl={getFileUrl}
+                                removeFile={removeFile}
+                                dragHandleProps={provided.dragHandleProps}
+                              />
+                            </div>
+                          )}
+                        </Draggable>
+                      ))}
+                      {provided.placeholder}
+                    </div>
+                  )}
+                </Droppable>
+              </DragDropContext>
+            </ScrollArea>
+          </div>
+        )}
+      </div>
     </div>
-  </div>
   );
-  
+
 };
 
 export default DropzoneComponent;

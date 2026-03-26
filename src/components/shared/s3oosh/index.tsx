@@ -1,7 +1,7 @@
 "use client";
 
 import { AxiosProgressEvent, CancelTokenSource } from "axios";
-import { useEffect, useRef, useState, useCallback } from "react";
+import { useState, useCallback } from "react";
 import DropzoneComponent from "./dropzone";
 
 enum FileStatus {
@@ -50,26 +50,10 @@ export default function S3oosh({ config, dirInBucket = null, onUploadComplete, i
     return initialUploadUrls;
   });
   const [errorMessage, setErrorMessage] = useState<string>("");
-  const prevUploadUrlsRef = useRef<Record<string, string>>({});
 
   const handleUploadComplete = useCallback((urls: string[]) => {
     onUploadComplete(urls);
   }, [onUploadComplete]);
-  
-  const memoizedOnUploadComplete = useCallback((urls: string[]) => {
-    onUploadComplete(urls);
-  }, [onUploadComplete]);
-
-  useEffect(() => {
-    const currentUploadUrls = JSON.stringify(uploadUrls);
-    const prevUploadUrls = JSON.stringify(prevUploadUrlsRef.current);
-
-    if (currentUploadUrls !== prevUploadUrls) {
-      const urls = Object.values(uploadUrls);
-      memoizedOnUploadComplete(urls);
-      prevUploadUrlsRef.current = uploadUrls;
-    }
-  }, [uploadUrls, memoizedOnUploadComplete]);
 
   const onUploadProgress = useCallback((
     progressEvent: AxiosProgressEvent,

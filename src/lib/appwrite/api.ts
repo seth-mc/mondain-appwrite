@@ -65,6 +65,15 @@ export async function saveUserToDB(user: {
 // ============================== SIGN IN
 export async function signInAccount(user: { email: string; password: string }) {
   try {
+    // First, try to delete any existing session
+    try {
+      await account.deleteSession("current");
+      console.log("Deleted existing session before login");
+    } catch (error) {
+      // No existing session to delete, or error deleting it - that's okay
+      console.log("No existing session to delete or error deleting:", error);
+    }
+
     // Create email/password session
     const session = await account.createEmailPasswordSession(user.email, user.password);
     return session;
@@ -259,9 +268,8 @@ export async function deleteFile(fileId: string) {
 export async function searchPosts(searchTerm: string, activeCategory?: string, pageParam?: string): Promise<Models.DocumentList<Models.Document>> {
   try {
     const queries: any[] = [
-      Query.orderAsc("order"),  // Sort by order field first
-      Query.orderDesc("$createdAt"),  // Then by creation date
-      Query.limit(9)  // Same limit as getInfinitePosts
+      Query.orderDesc("$createdAt"),
+      Query.limit(9)
     ];
 
     if (pageParam) {
@@ -272,7 +280,7 @@ export async function searchPosts(searchTerm: string, activeCategory?: string, p
       if (activeCategory && activeCategory !== "") {
         // Find the main category and its subcategories
         const mainCategory = mainCategories.find((cat: { name: string; subcategories: string[] }) => cat.name === activeCategory);
-        if (mainCategory) {
+        if (mainCategory && mainCategory.subcategories && mainCategory.subcategories.length > 0) {
           // Add category filter to the beginning of queries
           queries.unshift(
             Query.or(
@@ -321,9 +329,8 @@ export async function searchPosts(searchTerm: string, activeCategory?: string, p
 export async function getInfinitePosts({ pageParam = 0 }: { pageParam?: any }): Promise<Page> {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const queries: any[] = [
-    Query.orderAsc("order"),  // Sort by order field first
-    Query.orderDesc("$updatedAt"),  // Then by updatedAt
-    Query.limit(9)
+    Query.orderDesc("$updatedAt"),
+    Query.limit(30)
   ];
   if (pageParam) {
       queries.push(Query.cursorAfter(pageParam.toString()));
@@ -394,6 +401,7 @@ export async function updatePost(post: IUpdatePost) {
         content: post.content,
         category: post.category,
         shopifyProductId: post.shopifyProductId || null,
+        ...(post.quoteText !== undefined && { quoteText: post.quoteText }),
       }
     );
 
@@ -408,6 +416,20 @@ export async function updatePost(post: IUpdatePost) {
   }
 }
 
+
+// ============================== FULL DELETE POST (Appwrite doc + S3 files)
+export async function deletePostFull(postId: string) {
+  const base = import.meta.env.VITE_SERVER_URL ?? 'http://localhost:3001';
+  const apiKey = import.meta.env.VITE_POSTS_API_KEY ?? '';
+  const headers: Record<string, string> = { 'Content-Type': 'application/json' };
+  if (apiKey) headers['X-API-Key'] = apiKey;
+  const res = await fetch(`${base}/api/posts/${postId}`, { method: 'DELETE', headers });
+  if (!res.ok) {
+    const body = await res.json().catch(() => ({}));
+    throw new Error(body.error ?? `Delete failed: ${res.status}`);
+  }
+  return res.json();
+}
 
 // ============================== DELETE POST
 export async function deletePost(postId?: string, imageId?: string) {
@@ -425,26 +447,6 @@ export async function deletePost(postId?: string, imageId?: string) {
     await deleteFile(imageId);
 
     return { status: "Ok" };
-  } catch (error) {
-    console.log(error);
-  }
-}
-
-// ============================== LIKE / UNLIKE POST
-export async function likePost(postId: string, likesArray: string[]) {
-  try {
-    const updatedPost = await databases.updateDocument(
-      appwriteConfig.databaseId,
-      appwriteConfig.postCollectionId,
-      postId,
-      {
-        likes: likesArray,
-      }
-    );
-
-    if (!updatedPost) throw Error;
-
-    return updatedPost;
   } catch (error) {
     console.log(error);
   }

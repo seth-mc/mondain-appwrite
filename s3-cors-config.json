@@ -1,0 +1,28 @@
+{
+    "CORSRules": [
+        {
+            "AllowedHeaders": [
+                "*"
+            ],
+            "AllowedMethods": [
+                "GET",
+                "PUT",
+                "POST",
+                "HEAD"
+            ],
+            "AllowedOrigins": [
+                "http://localhost:8080",
+                "http://localhost:3000",
+                "https://mondain.page",
+                "https://*.mondain.page"
+            ],
+            "ExposeHeaders": [
+                "ETag",
+                "x-amz-server-side-encryption",
+                "x-amz-request-id",
+                "x-amz-id-2"
+            ],
+            "MaxAgeSeconds": 3000
+        }
+    ]
+}

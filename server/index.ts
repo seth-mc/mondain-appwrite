@@ -1,3 +1,8 @@
+// Patch global fetch to bypass expired TLS cert on Appwrite instance.
+// Remove once the cert is renewed.
+import { setGlobalDispatcher, Agent } from 'undici';
+setGlobalDispatcher(new Agent({ connect: { rejectUnauthorized: false } }));
+
 import express from 'express';
 import cors from 'cors';
 import path from 'path';
@@ -5,6 +10,7 @@ import { fileURLToPath } from 'url';
 import { dirname } from 'path';
 import imageRouter from './image.js';
 import videoRouter from './video.js';
+import postsRouter from './posts.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -22,11 +28,12 @@ app.use(cors({
       ],
   credentials: true
 }));
-app.use(express.json());
+app.use(express.json({ limit: '10mb' }));
 
 // API routes
 app.use('/api/image', imageRouter);
 app.use('/api/video', videoRouter);
+app.use('/api/posts', postsRouter);
 
 // Simple test endpoint
 app.get('/api/test', (req, res) => {
@@ -58,4 +65,6 @@ app.listen(port, () => {
   console.log(`- http://localhost:${port}/test`);
   console.log(`- http://localhost:${port}/health`);
   console.log(`- http://localhost:${port}/api/image/analyze`);
+  console.log(`- http://localhost:${port}/api/posts  (POST)`);
+  console.log(`- http://localhost:${port}/api/posts/bulk  (POST)`);
 }); 

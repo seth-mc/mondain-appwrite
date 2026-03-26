@@ -16,7 +16,7 @@ const Shop = ({ darkMode, isAdmin, toggleDarkMode }: DarkModeProps) => {
       if (hash.startsWith('#product-')) {
         const productId = hash.replace('#product-', '');
         console.log('Focusing on product:', productId);
-        
+
         // Scroll to product or highlight it
         setTimeout(() => {
           const productElement = document.querySelector(`[data-product-id="${productId}"]`);
@@ -43,15 +43,15 @@ const Shop = ({ darkMode, isAdmin, toggleDarkMode }: DarkModeProps) => {
   return (
     <div className="min-h-screen bg-light-1">
       <Sidebar darkMode={darkMode} />
-      <Header 
-        darkMode={darkMode} 
-        isAdmin={isAdmin} 
-        toggleDarkMode={toggleDarkMode} 
+      <Header
+        darkMode={darkMode}
+        isAdmin={isAdmin}
+        toggleDarkMode={toggleDarkMode}
       />
-      
+
       <main className="px-4 md:px-8 md:ml-64">
         <div className="max-w-screen-xl mx-auto py-8">
-          
+
           {/* Shop Header */}
           <div className="flex flex-col items-center mb-12">
             <div className="relative">
@@ -64,7 +64,7 @@ const Shop = ({ darkMode, isAdmin, toggleDarkMode }: DarkModeProps) => {
           </div>
 
           {/* Shopify Store Context */}
-          <div 
+          <div
             dangerouslySetInnerHTML={{
               __html: `
                 <script type="module" src="https://cdn.shopify.com/storefront/web-components.js"></script>
@@ -258,7 +258,7 @@ const Shop = ({ darkMode, isAdmin, toggleDarkMode }: DarkModeProps) => {
 
           {/* Floating Cart Button */}
           <div className="hidden fixed bottom-6 right-6">
-            <button 
+            <button
               className="bg-black text-white px-6 py-3 rounded-full shadow-lg hover:bg-gray-800 transition-colors font-medium"
               onClick={() => {
                 const cart = document.getElementById('main-cart') as any;
@@ -453,296 +453,6 @@ const Shop = ({ darkMode, isAdmin, toggleDarkMode }: DarkModeProps) => {
             padding: 3rem;
             color: #6b7280;
             font-size: 1.125rem;
-          }
-          
-          /* Modal Styles */
-          .product-modal {
-            padding: 0;
-            border: none;
-            border-radius: 1rem;
-            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
-            max-width: 100vw;
-            max-height: 100vh;
-            width: fit-content;
-            height: auto;
-            margin: auto;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            position: fixed;
-          }
-          
-          .product-modal::backdrop {
-            background: rgba(0, 0, 0, 0.5);
-          }
-          
-          .modal-container {
-            position: relative;
-            background: white;
-            border-radius: 1rem;
-            overflow: hidden;
-            width: 100%;
-            min-width: 350px;
-            max-width: 70rem;
-          }
-          
-          .modal-close-container {
-            position: absolute;
-            top: 0.75rem;
-            right: 0.75rem;
-            z-index: 20;
-          }
-          
-          .modal-close-btn {
-            width: 40px;
-            height: 40px;
-            border-radius: 50%;
-            background: rgba(0, 0, 0, 0.1);
-            border: none;
-            font-size: 1.25rem;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            transition: all 0.3s ease;
-          }
-          
-          .modal-close-btn:hover {
-            background: rgba(0, 0, 0, 0.2);
-          }
-          
-          .modal-content {
-            padding: 2rem;
-            width: 100%;
-            min-height: 400px;
-          }
-          
-          .modal-layout {
-            display: grid;
-            gap: 2rem;
-            grid-template-columns: 1fr;
-            width: 100%;
-            align-items: start;
-            min-height: 350px;
-          }
-          
-          @media (min-width: 768px) {
-            .modal-layout {
-              grid-template-columns: 1fr 1fr;
-              gap: 3rem;
-              min-height: 450px;
-            }
-            .modal-content {
-              padding: 2.5rem;
-            }
-            .modal-details {
-              min-height: 400px;
-            }
-          }
-          
-          @media (min-width: 1200px) {
-            .product-modal {
-              max-width: 85vw;
-              max-height: 85vh;
-            }
-            .modal-container {
-              max-width: 80rem;
-            }
-            .modal-content {
-              padding: 3rem;
-            }
-            .modal-layout {
-              gap: 4rem;
-            }
-          }
-          
-          .modal-media {
-            display: flex;
-            justify-content: center;
-            align-items: flex-start;
-            max-height: 800px;
-            overflow: hidden;
-          }
-          
-          .modal-image {
-            width: 100%;
-            max-width: 400px;
-            height: auto;
-            border-radius: 0.5rem;
-            object-fit: cover;
-          }
-          
-          .modal-details {
-            display: flex;
-            flex-direction: column;
-            gap: 1.5rem;
-            justify-content: flex-start;
-            min-height: 300px;
-            padding: 0.5rem 0;
-          }
-          
-          .modal-header {
-            display: flex;
-            flex-direction: column;
-            gap: 0.375rem;
-          }
-          
-          .modal-vendor {
-            font-size: 0.75rem;
-            text-transform: uppercase;
-            letter-spacing: 0.1em;
-            color: #6b7280;
-            font-weight: 700;
-          }
-          
-          .modal-title {
-            font-size: 2rem;
-            font-weight: 700;
-            margin: 0;
-            color: #000;
-            line-height: 1.2;
-          }
-          
-          .modal-price {
-            font-size: 1.5rem;
-            font-weight: 700;
-            color: #000;
-          }
-          
-          .variant-selector-container {
-            border-top: 1px solid #e5e7eb;
-            border-bottom: 1px solid #e5e7eb;
-            padding: 1rem 0;
-            margin: 0.5rem 0;
-          }
-          
-          .modal-buttons {
-            display: flex;
-            flex-direction: column;
-            gap: 0.75rem;
-            margin-top: 1rem;
-            margin-bottom: 1rem;
-            padding-bottom: 0.5rem;
-          }
-          
-          .modal-add-btn, .modal-buy-btn {
-            padding: 1.25rem 2.5rem;
-            border: 2px solid #000;
-            border-radius: 0.5rem;
-            font-size: 1.1rem;
-            font-weight: 700;
-            text-transform: uppercase;
-            letter-spacing: 0.05em;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            min-height: 56px;
-          }
-          
-          .modal-add-btn {
-            background: #000;
-            color: white;
-          }
-          
-          .modal-add-btn:hover {
-            background: white;
-            color: #000;
-          }
-          
-          .modal-add-btn:disabled {
-            opacity: 0.5;
-            cursor: not-allowed;
-          }
-          
-          .modal-buy-btn {
-            background: white;
-            color: #000;
-          }
-          
-          .modal-buy-btn:hover {
-            background: #f3f4f6;
-          }
-          
-          .modal-buy-btn:disabled {
-            opacity: 0.5;
-            cursor: not-allowed;
-          }
-          
-          .modal-description {
-            color: #374151;
-            line-height: 1.6;
-          }
-          
-          .modal-description p {
-            margin: 0 0 1rem 0;
-          }
-          
-          .modal-loading {
-            padding: 3rem;
-            text-align: center;
-            color: #6b7280;
-          }
-          
-          /* Shopify Component Customization */
-          shopify-cart::part(dialog) {
-            border-radius: 0.75rem;
-            max-width: 600px;
-            margin: auto;
-            padding: 1.5rem;
-          }
-          
-          shopify-cart::part(primary-button) {
-            background-color: #000000;
-            border: 2px solid #000000;
-            border-radius: 0.5rem;
-            color: #ffffff;
-            font-size: 1rem;
-            font-weight: 600;
-            padding: 1rem 2rem;
-            transition: all 0.3s ease;
-          }
-          
-          shopify-cart::part(primary-button):hover {
-            background-color: #ffffff;
-            color: #000000;
-          }
-          
-          shopify-cart::part(secondary-button) {
-            background-color: #ffffff;
-            color: #000000;
-            fill: #000000;
-            border: 1px solid #e5e7eb;
-            border-radius: 0.375rem;
-            font-size: 0.875rem;
-            padding: 0.5rem 1rem;
-            transition: all 0.3s ease;
-          }
-          
-          shopify-cart::part(secondary-button):hover {
-            background-color: #f9fafb;
-            border-color: #d1d5db;
-          }
-          
-          shopify-variant-selector::part(form) {
-            display: flex;
-            flex-direction: column;
-            gap: 1rem;
-          }
-          
-          shopify-variant-selector::part(label) {
-            font-weight: 600;
-            margin-bottom: 0.5rem;
-            color: #000000;
-            font-size: 0.875rem;
-            text-transform: uppercase;
-            letter-spacing: 0.05em;
-          }
-          
-          shopify-variant-selector::part(radio) {
-            margin-right: 0.5rem;
-          }
-          
-          dialog::backdrop {
-            background-color: rgba(0, 0, 0, 0.5);
           }
         `
       }} />

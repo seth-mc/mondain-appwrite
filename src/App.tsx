@@ -12,6 +12,8 @@ import AboutUs from './_root/pages/AboutUs';
 import Recent from './_root/pages/Recent';
 import PlayerComponent from './components/shared/Player';
 import Shop from './_root/pages/Shop';
+import { Agentation } from "agentation";
+
 
 
 const App = () => {
@@ -63,7 +65,7 @@ const App = () => {
   }, []);
 
   return (
-    <main className={`hello ${darkMode ? "dark" : ""} flex h-screen`}>
+    <main className={`hello ${darkMode ? "dark" : ""} flex min-h-screen`}>
       {/* Global Shopify Store Configuration */}
       <shopify-store 
         store-domain="m-ondain.myshopify.com"
@@ -112,6 +114,7 @@ const App = () => {
       />
 
       <Toaster />
+      {process.env.NODE_ENV === "development" && <Agentation />}
     </main>
 
   )

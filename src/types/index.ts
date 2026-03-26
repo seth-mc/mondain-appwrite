@@ -38,6 +38,7 @@ export type IUpdatePost = {
   category: string;
   order?: number;
   shopifyProductId?: string;
+  quoteText?: string;
 };
 
 export type IUser = {
@@ -101,6 +102,8 @@ export type DocumentType = {
   category: string;
   thumbnailUrl: string | null;
   shopifyProductId?: string;
+  mediaType?: string;
+  quoteText?: string;
   $id: string;
   $createdAt: string;
   $updatedAt: string;

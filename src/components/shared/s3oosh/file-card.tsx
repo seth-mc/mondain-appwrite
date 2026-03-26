@@ -1,13 +1,16 @@
 import { FileUploadProgress, FileStatus } from "./types";
 import { getFileIconAndColor } from "./fileUtils";
 import { Progress } from "@/components/ui/progress";
-import { Link, X } from "lucide-react";
+import { Link, X, GripVertical } from "lucide-react";
 
 interface FileCardProps {
   fileUploadProgress: FileUploadProgress;
   thumbnails: Record<string, string>;
   getFileUrl: (file: FileUploadProgress) => string;
   removeFile: (file: File) => void;
+  innerRef?: React.Ref<HTMLDivElement>;
+  draggableProps?: any;
+  dragHandleProps?: any;
 }
 
 const FileCard: React.FC<FileCardProps> = ({
@@ -15,12 +18,24 @@ const FileCard: React.FC<FileCardProps> = ({
   thumbnails,
   getFileUrl,
   removeFile,
+  innerRef,
+  draggableProps,
+  dragHandleProps,
 }) => {
   return (
-    <div className="relative group flex flex-col items-center w-full">
-    <div className="w-full h-16 sm:h-20 lg:h-24 flex items-center justify-center bg-gray-100 rounded-md overflow-hidden relative">
+    <div 
+      className="relative group flex flex-col items-center w-full"
+      ref={innerRef}
+      {...draggableProps}
+    >
+    <div className="w-full h-16 sm:h-20 lg:h-24 flex items-center justify-center bg-gray-100 rounded-md overflow-hidden relative" {...dragHandleProps}>
+      {dragHandleProps && (
+        <div className="absolute top-2 right-2 text-gray-400 hover:text-gray-600 transition-colors cursor-grab active:cursor-grabbing z-10">
+          <GripVertical size={16} />
+        </div>
+      )}
       {fileUploadProgress.status === FileStatus.Uploaded && fileUploadProgress.newFileName && (
-        <a href={getFileUrl(fileUploadProgress)} target="_blank" rel="noopener noreferrer" className="absolute top-2 left-2 text-gray-500 hover:text-gray-700" onClick={(e) => e.stopPropagation()}>
+        <a href={getFileUrl(fileUploadProgress)} target="_blank" rel="noopener noreferrer" className="absolute top-2 left-2 text-gray-500 hover:text-gray-700 z-10" onClick={(e) => e.stopPropagation()}>
           <Link size={12} />
         </a>
       )}

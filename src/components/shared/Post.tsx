@@ -1,7 +1,8 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { Models } from 'appwrite';
 import { motion } from 'framer-motion';
 import { GripVertical, ShoppingCart } from 'lucide-react';
+import { useDeletePostFull } from '@/lib/react-query/queries';
 
 type PostProps = {
   post: Models.Document;
@@ -13,10 +14,16 @@ type PostProps = {
 }
 
 const Post = ({ post, dragHandleProps, isAdmin, delay = 0, isSelected = false }: PostProps) => {
+  const [isHovered, setIsHovered] = useState(false);
+  const [contextMenu, setContextMenu] = useState<{ x: number; y: number } | null>(null);
+  const [deleting, setDeleting] = useState(false);
+  const contextMenuRef = useRef<HTMLDivElement>(null);
+  const { mutateAsync: deletePostFull } = useDeletePostFull();
   const isVideo = post.mediaType === 'video';
+  const isQuote = post.mediaType === 'quote';
   const { imageUrls, thumbnailUrl, shopifyProductId } = post;
   const hasShopifyProduct = shopifyProductId && shopifyProductId.trim() !== '';
-  
+
   // Load Shopify Web Components script if this post has a product
   useEffect(() => {
     if (hasShopifyProduct && !document.querySelector('script[src*="storefront/web-components"]')) {
@@ -27,97 +34,88 @@ const Post = ({ post, dragHandleProps, isAdmin, delay = 0, isSelected = false }:
     }
   }, [hasShopifyProduct]);
 
-  const handleClick = (e: React.MouseEvent) => {
-    // Prevent click when dragging or clicking buy button
-    if ((e.target as HTMLElement).closest('.drag-handle') || 
-        (e.target as HTMLElement).closest('.buy-button')) {
-      return;
-    }
-    const event = new CustomEvent('postSelected', { detail: { postId: post.$id } });
-    window.dispatchEvent(event);
+  // Dismiss context menu on outside click
+  useEffect(() => {
+    if (!contextMenu) return;
+    const dismiss = (e: MouseEvent) => {
+      if (contextMenuRef.current && !contextMenuRef.current.contains(e.target as Node)) {
+        setContextMenu(null);
+      }
+    };
+    document.addEventListener('mousedown', dismiss);
+    return () => document.removeEventListener('mousedown', dismiss);
+  }, [contextMenu]);
+
+  const handleContextMenu = (e: React.MouseEvent) => {
+    if (!isAdmin) return;
+    e.preventDefault();
+    setContextMenu({ x: e.clientX, y: e.clientY });
   };
 
+  const handleDelete = async () => {
+    setContextMenu(null);
+    setDeleting(true);
+    try {
+      await deletePostFull(post.$id);
+    } catch (err) {
+      console.error('Delete failed:', err);
+      alert('Delete failed — check the console for details.');
+    } finally {
+      setDeleting(false);
+    }
+  };
+
+  const handleClick = (e: React.MouseEvent) => {
+    // Basic checks to not override internal elements
+    if ((e.target as Element).closest('button')) return;
+    if ((e.target as Element).closest('.modal-container')) return;
+
+    if (!isSelected) {
+      const customEvent = new CustomEvent('postSelected', {
+        detail: { postId: post.$id },
+        bubbles: true,
+        composed: true
+      });
+      document.dispatchEvent(customEvent);
+    }
+  };
   const handleBuyClick = (e: React.MouseEvent) => {
     e.stopPropagation();
+    e.preventDefault();
     if (!hasShopifyProduct) return;
-    
-    console.log('Buy button clicked for product:', shopifyProductId);
-    console.log('Post ID:', post.$id);
-    
-    // Check if cart exists first
-    const mainCart = document.querySelector('#main-cart') as any;
-    const globalCart = document.querySelector('#global-cart') as any;
-    const anyShopifyCart = document.querySelector('shopify-cart') as any;
-    const cart = mainCart || globalCart || anyShopifyCart;
-    
-    console.log('Available carts:', {
-      mainCart: !!mainCart,
-      globalCart: !!globalCart,
-      anyShopifyCart: !!anyShopifyCart,
-      selectedCart: !!cart
-    });
-    
-    // Find and click the hidden Shopify button
-    const hiddenButton = document.querySelector(`#hidden-buy-${post.$id}`) as HTMLElement;
-    console.log('Hidden button found:', !!hiddenButton);
-    
-    if (hiddenButton) {
-      console.log('Clicking hidden Shopify button');
-      hiddenButton.click();
-    } else {
-      console.error('Hidden Shopify button not found, looking for all hidden buttons');
-      const allHiddenButtons = document.querySelectorAll(`[id^="hidden-buy-"]`);
-      console.log('All hidden buttons found:', allHiddenButtons.length);
-      
-      // Fallback: try direct cart approach
-      if (cart) {
-        console.log('Trying direct cart approach...');
-        try {
-          const variantId = /^\d+$/.test(shopifyProductId) 
-            ? `gid://shopify/ProductVariant/${shopifyProductId}` 
-            : shopifyProductId;
-          
-          cart.addLine({
-            merchandiseId: variantId,
-            quantity: 1
-          }).then(() => {
-            console.log('Direct add successful');
-            cart.showModal();
-          }).catch((err: any) => {
-            console.error('Direct add failed:', err);
-          });
-        } catch (error) {
-          console.error('Direct cart error:', error);
-        }
-      }
-    }
+    const modal = document.getElementById(`product-modal-${post.$id}`) as HTMLDialogElement;
+    if (modal) modal.showModal();
   };
 
   return (
+    <>
     <motion.div
       onClick={handleClick}
+      onContextMenu={handleContextMenu}
       className="post-container"
-      style={{ 
+      style={{
         padding: '8px',
         background: 'none',
         border: 'none',
         position: 'relative',
-        overflow: 'hidden',
+        overflow: isQuote ? 'visible' : 'hidden',
         cursor: 'pointer',
         display: 'block'
       }}
       initial={{ opacity: 0, y: 20 }}
-      animate={{ 
+      animate={{
         opacity: isSelected ? 0.3 : 1,
         y: 0,
         scale: isSelected ? 0.95 : 1
       }}
-      transition={{ 
+      transition={{
         duration: 0.3,
         delay: delay,
         ease: "easeOut"
       }}
       whileHover={{ scale: 1.02 }}
+      onMouseEnter={() => setIsHovered(true)}
+      onMouseLeave={() => setIsHovered(false)}
     >
       {isAdmin && (
         <div
@@ -142,11 +140,49 @@ const Post = ({ post, dragHandleProps, isAdmin, delay = 0, isSelected = false }:
           <GripVertical size={16} color="white" />
         </div>
       )}
-      {isVideo && thumbnailUrl ? (
+      {isQuote ? (
+        <div
+          style={{
+            width: '100%',
+            borderRadius: '4px',
+            background: '#f7f6f3',
+            padding: '20px 24px 24px',
+            boxSizing: 'border-box',
+          }}
+        >
+          <div style={{
+            fontFamily: "Georgia, 'Times New Roman', serif",
+            fontSize: '48px',
+            lineHeight: 1,
+            color: '#c8c4bc',
+            userSelect: 'none',
+            marginBottom: '4px',
+          }}>"</div>
+          <p style={{
+            fontFamily: "Georgia, 'Times New Roman', serif",
+            fontSize: '15px',
+            lineHeight: 1.65,
+            color: '#1a1a1a',
+            textAlign: 'center',
+            margin: '0 0 4px',
+            wordBreak: 'break-word',
+          }}>
+            {post.quoteText || post.caption}
+          </p>
+          <div style={{
+            fontFamily: "Georgia, 'Times New Roman', serif",
+            fontSize: '48px',
+            lineHeight: 1,
+            color: '#c8c4bc',
+            textAlign: 'right',
+            userSelect: 'none',
+          }}>"</div>
+        </div>
+      ) : isVideo && thumbnailUrl ? (
         <img
           src={thumbnailUrl}
           alt="video-thumbnail"
-          style={{ 
+          style={{
             width: '100%',
             height: 'auto',
             borderRadius: '4px',
@@ -155,19 +191,20 @@ const Post = ({ post, dragHandleProps, isAdmin, delay = 0, isSelected = false }:
         />
       ) : (
         <img
-          src={imageUrls[0]}
+          src={isHovered && imageUrls.length > 1 ? imageUrls[1] : imageUrls[0]}
           alt="user-post"
-          style={{ 
+          style={{
             width: '100%',
             height: 'auto',
             borderRadius: '4px',
-            display: 'block'
+            display: 'block',
+            transition: 'opacity 0.3s ease-in-out'
           }}
         />
       )}
-      
+
       {/* Buy Button for Shopify Products */}
-      {hasShopifyProduct && (
+      {!isQuote && hasShopifyProduct && (
         <div
           className="buy-button"
           style={{
@@ -195,84 +232,30 @@ const Post = ({ post, dragHandleProps, isAdmin, delay = 0, isSelected = false }:
           }}
         >
           <ShoppingCart size={14} color="white" />
-          <span style={{ 
-            color: 'white', 
-            fontSize: '12px', 
+          <span style={{
+            color: 'white',
+            fontSize: '12px',
             fontWeight: '600',
             textTransform: 'uppercase',
             letterSpacing: '0.5px'
           }}>
-            Buy Poster
+            Buy Now
           </span>
         </div>
       )}
-      
-            {/* Hidden Shopify Context for Cart Functionality */}
-      {hasShopifyProduct && (
-        <div 
-          className="buy-button" 
-          style={{ 
-            display: 'none',
-            position: 'absolute',
-            pointerEvents: 'none'
-          }}
-          dangerouslySetInnerHTML={{
-            __html: `
-              <shopify-context type="product" gid="gid://shopify/Product/${shopifyProductId}">
-                <template>
-                  <button
-                    id="hidden-buy-${post.$id}"
-                    onclick="
-                       event.preventDefault();
-                       event.stopPropagation();
-                       console.log('Hidden button clicked');
-                       
-                       // Try multiple ways to find the cart
-                       const mainCart = document.getElementById('main-cart');
-                       const globalCart = document.getElementById('global-cart');
-                       const anyCart = document.querySelector('shopify-cart');
-                       const cart = mainCart || globalCart || anyCart;
-                       
-                       if (cart && typeof cart.addLine === 'function') {
-                         console.log('Adding to cart via hidden button...');
-                         const addPromise = cart.addLine(event);
-                         
-                         if (addPromise && typeof addPromise.then === 'function') {
-                           addPromise.then(() => {
-                             console.log('Item added successfully, showing modal...');
-                             // Try to show modal with multiple approaches
-                             if (typeof cart.showModal === 'function') {
-                               cart.showModal();
-                               console.log('Cart modal opened');
-                             } else {
-                               console.warn('showModal not available');
-                             }
-                           }).catch(err => {
-                             console.error('Cart add failed:', err);
-                           });
-                         } else {
-                           console.log('AddLine completed synchronously, showing modal...');
-                           setTimeout(() => {
-                             if (typeof cart.showModal === 'function') {
-                               cart.showModal();
-                               console.log('Cart modal opened (sync)');
-                             }
-                           }, 200);
-                         }
-                       } else {
-                         console.error('No cart found or addLine not available');
-                       }
-                     "
-                  >
-                    Hidden Buy Button
-                  </button>
-                </template>
-              </shopify-context>
-            `
-          }}
-        />
+
+
+      {/* Deleting overlay */}
+      {deleting && (
+        <div style={{
+          position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.5)',
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+          borderRadius: '4px', zIndex: 20,
+        }}>
+          <span style={{ color: 'white', fontSize: '12px', fontFamily: 'monospace' }}>Deleting…</span>
+        </div>
       )}
-      
+
       {/* CSS for hover effects */}
       <style dangerouslySetInnerHTML={{
         __html: `
@@ -282,7 +265,96 @@ const Post = ({ post, dragHandleProps, isAdmin, delay = 0, isSelected = false }:
           }
         `
       }} />
+
+      {/* Embedded Product Modal for Shoppable Posts */}
+      {!isQuote && hasShopifyProduct && (
+        <dialog id={`product-modal-${post.$id}`} className="product-modal z-50">
+          {/* @ts-ignore - custom shopify attribute */}
+          <shopify-context type="product" gid={`gid://shopify/Product/${shopifyProductId}`}>
+            {/* dangerouslySetInnerHTML on <template> correctly populates its content fragment,
+                which is required for Shopify Web Components to recognise their context */}
+            <template dangerouslySetInnerHTML={{ __html: `
+              <div class="modal-container">
+                <div class="modal-close-container">
+                  <button class="modal-close-btn" onclick="document.getElementById('product-modal-${post.$id}').close()">✕</button>
+                </div>
+                <div class="modal-content">
+                  <div class="modal-layout">
+                    <div class="modal-media">
+                      <shopify-media width="500" height="500" query="product.selectedOrFirstAvailableVariant.image" class="modal-image"></shopify-media>
+                    </div>
+                    <div class="modal-details">
+                      <div class="modal-header">
+                        <span class="modal-vendor"><shopify-data query="product.vendor"></shopify-data></span>
+                        <h1 class="modal-title font-times"><shopify-data query="product.title"></shopify-data></h1>
+                        <div class="modal-price font-space"><shopify-money query="product.selectedOrFirstAvailableVariant.price"></shopify-money></div>
+                      </div>
+                      <div class="modal-buttons font-courier">
+                        <button class="modal-add-btn" shopify-attr--disabled="!product.selectedOrFirstAvailableVariant.availableForSale"
+                          onclick="(function(btn){var cart=document.getElementById('global-cart');var modal=document.getElementById('product-modal-${post.$id}');if(cart&&cart.addLine){cart.addLine(btn).then(function(){cart.showModal();if(modal)modal.close();})}})(this)">Add to Cart</button>
+                        <button class="modal-buy-btn" shopify-attr--disabled="!product.selectedOrFirstAvailableVariant.availableForSale"
+                          onclick="(function(btn){var store=document.querySelector('shopify-store');if(store&&store.buyNow)store.buyNow(btn)})(this)">Buy Now</button>
+                      </div>
+                      <div class="modal-description font-courier text-sm">
+                        <shopify-data query="product.descriptionHtml"></shopify-data>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            ` }} />
+            <div shopify-loading-placeholder="" className="modal-loading font-courier">
+              <p>Loading product details...</p>
+            </div>
+          </shopify-context>
+        </dialog>
+      )}
     </motion.div>
+
+      {/* Right-click context menu */}
+      {contextMenu && (
+        <div
+          ref={contextMenuRef}
+          style={{
+            position: 'fixed',
+            top: contextMenu.y,
+            left: contextMenu.x,
+            zIndex: 9999,
+            background: 'white',
+            borderRadius: '8px',
+            boxShadow: '0 8px 24px rgba(0,0,0,0.15)',
+            padding: '4px',
+            minWidth: '160px',
+          }}
+          onContextMenu={(e) => e.preventDefault()}
+        >
+          <button
+            onClick={handleDelete}
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '8px',
+              width: '100%',
+              padding: '8px 12px',
+              border: 'none',
+              background: 'none',
+              borderRadius: '6px',
+              cursor: 'pointer',
+              fontSize: '13px',
+              color: '#dc2626',
+              textAlign: 'left',
+            }}
+            onMouseEnter={(e) => (e.currentTarget.style.background = '#fef2f2')}
+            onMouseLeave={(e) => (e.currentTarget.style.background = 'none')}
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+            </svg>
+            Delete post
+          </button>
+        </div>
+      )}
+    </>
   );
 };
 
